@@ -123,7 +123,7 @@ JSON, `Account` with name and password fields set.
 
 The following routes are those related to tasks.
 
-### GET /tasks/{accountID}
+### GET /tasks/{accountId}
 
 Responds with a list of `Task`s.
 
@@ -133,7 +133,7 @@ Responds with a list of `Task`s.
 #### Body
 JSON, `AuthToken`.
 
-### POST /tasks/{accountID}
+### POST /tasks/{accountId}
 
 Updates or creates a new `Task`.
 
