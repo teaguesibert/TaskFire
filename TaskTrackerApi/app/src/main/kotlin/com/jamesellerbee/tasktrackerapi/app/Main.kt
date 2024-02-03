@@ -1,8 +1,12 @@
 package com.jamesellerbee.tasktrackerapi.app
 
 import com.jamesellerbee.tasktrackerapi.app.bl.account.AccountManager
-import com.jamesellerbee.tasktrackerapi.app.dal.entites.Account
-import io.ktor.http.HttpStatusCode
+import com.jamesellerbee.tasktrackerapi.app.bl.routes.account.accountRoutes
+import com.jamesellerbee.tasktrackerapi.app.bl.routes.task.taskRoutes
+import com.jamesellerbee.tasktrackerapi.app.bl.session.SessionManager
+import com.jamesellerbee.tasktrackerapi.app.dal.repository.TaskRepository
+import com.jamesellerbee.tasktrackerapi.app.util.RegistrationStrategy
+import com.jamesellerbee.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -10,20 +14,41 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
-import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import java.util.UUID
-import kotlinx.serialization.json.JsonObject
 import org.slf4j.LoggerFactory
 
 fun main() {
     val logger = LoggerFactory.getLogger("main")
     logger.info("Starting up")
+
+    val serviceLocator = ServiceLocator.instance
+
     val accountManager = AccountManager()
+    val sessionManager = SessionManager()
+    val taskRepository = TaskRepository()
+
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = AccountManager::class,
+            service = accountManager
+        )
+    )
+
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = SessionManager::class,
+            service = sessionManager
+        )
+    )
+
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = TaskRepository::class,
+            service = taskRepository
+        )
+    )
 
     embeddedServer(
         factory = Netty,
@@ -40,25 +65,8 @@ fun main() {
                     call.respondText("Hello, world!")
                 }
 
-                get("/accounts") {
-                    val account =
-                        accountManager.accounts.values.firstOrNull { it.name == call.request.queryParameters["name"] }
-
-                    call.respond(account ?: JsonObject(emptyMap()))
-                }
-
-                post("/register") {
-                    val newAccount = call.receive<Account>()
-                    if (accountManager.accounts.none { (_, account) ->
-                            account.name == newAccount.name
-                        }) {
-                        accountManager.addAccount(newAccount.copy(id = UUID.randomUUID().toString()))
-                        call.respond(HttpStatusCode.OK)
-                    } else {
-                        call.respond(HttpStatusCode.Conflict, "Account already exists with that name")
-                    }
-
-                }
+                accountRoutes()
+                taskRoutes()
             }
         }
     ).start(wait = true)
