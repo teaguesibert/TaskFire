@@ -1,12 +1,12 @@
-package com.jamesellerbee.tasktrackerapi.app
+package com.jamesellerbee.taskfire.tasktrackerapi.app
 
-import com.jamesellerbee.tasktrackerapi.app.bl.account.AccountManager
-import com.jamesellerbee.tasktrackerapi.app.bl.routes.account.accountRoutes
-import com.jamesellerbee.tasktrackerapi.app.bl.routes.task.taskRoutes
-import com.jamesellerbee.tasktrackerapi.app.bl.session.SessionManager
-import com.jamesellerbee.tasktrackerapi.app.dal.repository.TaskRepository
-import com.jamesellerbee.tasktrackerapi.app.util.RegistrationStrategy
-import com.jamesellerbee.tasktrackerapi.app.util.ServiceLocator
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.account.AccountManager
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account.accountRoutes
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task.taskRoutes
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.TaskRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.RegistrationStrategy
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.application.install

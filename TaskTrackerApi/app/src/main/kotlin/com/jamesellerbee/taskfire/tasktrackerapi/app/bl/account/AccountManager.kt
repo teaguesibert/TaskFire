@@ -1,6 +1,6 @@
-package com.jamesellerbee.tasktrackerapi.app.bl.account
+package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.account
 
-import com.jamesellerbee.tasktrackerapi.app.dal.entites.Account
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
 
 class AccountManager {
     private val _accounts = mutableMapOf<String, Account>()

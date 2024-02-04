@@ -1,9 +1,9 @@
-package com.jamesellerbee.tasktrackerapi.app.bl.auth
+package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.auth
 
-import com.jamesellerbee.tasktrackerapi.app.bl.session.SessionManager
-import com.jamesellerbee.tasktrackerapi.app.dal.entites.AuthToken
-import com.jamesellerbee.tasktrackerapi.app.util.ResolutionStrategy
-import com.jamesellerbee.tasktrackerapi.app.util.ServiceLocator
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.AuthToken
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respond

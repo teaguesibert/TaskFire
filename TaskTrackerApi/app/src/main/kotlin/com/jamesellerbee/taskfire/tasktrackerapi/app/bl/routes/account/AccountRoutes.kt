@@ -1,11 +1,11 @@
-package com.jamesellerbee.tasktrackerapi.app.bl.routes.account
+package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account
 
-import com.jamesellerbee.tasktrackerapi.app.bl.account.AccountManager
-import com.jamesellerbee.tasktrackerapi.app.bl.session.SessionManager
-import com.jamesellerbee.tasktrackerapi.app.dal.entites.Account
-import com.jamesellerbee.tasktrackerapi.app.dal.entites.AuthToken
-import com.jamesellerbee.tasktrackerapi.app.util.ResolutionStrategy
-import com.jamesellerbee.tasktrackerapi.app.util.ServiceLocator
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.account.AccountManager
+import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.AuthToken
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
+import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive

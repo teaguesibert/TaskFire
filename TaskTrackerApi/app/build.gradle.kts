@@ -1,15 +1,17 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
+    id("com.github.johnrengelman.shadow")
     application
 }
 
-group = "com.jamesellerbee.trasktrackerapi"
+group = "com.jamesellerbee.taskfire.trasktrackerapi"
 version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
     google()
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -31,5 +33,13 @@ kotlin {
 }
 
 application {
-    mainClass = "com.jamesellerbee.tasktrackerapi.app.MainKt"
+    mainClass = "com.jamesellerbee.taskfire.tasktrackerapi.app.MainKt"
+}
+
+tasks {
+    shadowJar {
+        archiveBaseName.set("taskfireapi")
+        archiveClassifier.set("")
+        archiveVersion.set("")
+    }
 }
