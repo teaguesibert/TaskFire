@@ -2,9 +2,8 @@ package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task
 
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.auth.authToPerformUserAction
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.AuthToken
-import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Task
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.TaskWrapper
-import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.TaskRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.HttpStatusCode
@@ -36,7 +35,7 @@ fun Routing.taskRoutes() {
             token = call.receive<AuthToken>(),
             accountIdEffected = accountId
         ) {
-            val tasks = taskRepository.getTasks(accountId)
+            val tasks = taskRepository.getTasksByAccountId(accountId)
             call.respond(tasks)
         }
     }

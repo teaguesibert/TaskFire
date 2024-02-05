@@ -1,9 +1,9 @@
 package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account
 
-import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.account.AccountManager
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.AuthToken
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.HttpStatusCode
@@ -21,14 +21,14 @@ import java.util.UUID
  */
 fun Routing.accountRoutes() {
     val serviceLocator = ServiceLocator.instance
-    val accountManager = serviceLocator.resolve<AccountManager>(
-        ResolutionStrategy.ByType(type = AccountManager::class)
+
+    val accountRepository = serviceLocator.resolve<AccountRepository>(
+        ResolutionStrategy.ByType(type = AccountRepository::class)
     )!!
 
     val sessionManager = serviceLocator.resolve<SessionManager>(
         ResolutionStrategy.ByType(type = SessionManager::class)
     )!!
-
 
     get("/accounts") {
         val token = call.receive<AuthToken>()
@@ -39,9 +39,9 @@ fun Routing.accountRoutes() {
         }
 
         val message = if (call.request.queryParameters["name"] == null) {
-            accountManager.accounts.values.map { it.copy(password = "") }
+            accountRepository.getAccounts().map { it.copy(password = "") }
         } else {
-            accountManager.accounts.values
+            accountRepository.getAccounts()
                 .filter { it.name == call.request.queryParameters["name"] }
                 .map { it.copy(password = "") }
         }
@@ -53,7 +53,7 @@ fun Routing.accountRoutes() {
         val account = call.receive<Account>()
 
         val existingAccount =
-            accountManager.accounts.values.firstOrNull {
+            accountRepository.getAccounts().firstOrNull {
                 it.name == account.name
                         && it.password == account.password
             }
@@ -78,10 +78,10 @@ fun Routing.accountRoutes() {
             call.respond(HttpStatusCode.NotAcceptable, "Password cannot be blank")
         }
 
-        if (accountManager.accounts.none { (_, account) ->
+        if (accountRepository.getAccounts().none { account ->
                 account.name == newAccount.name
             }) {
-            accountManager.addAccount(newAccount.copy(id = UUID.randomUUID().toString()))
+            accountRepository.addAccount(newAccount.copy(id = UUID.randomUUID().toString()))
             call.respond(HttpStatusCode.OK)
         } else {
             call.respond(HttpStatusCode.Conflict, "Account already exists with that name")
