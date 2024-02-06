@@ -1,2 +1,3 @@
 gradlew clean build
-java -jar app/build/libs/taskfireapi.jar
+sudo docker build -t taskfire .
+docker run -it --rm -p 8080:8080 --name taskfireserver taskfire java -jar ./jars/taskfireapi.jar --inMemory
