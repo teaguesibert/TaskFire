@@ -6,6 +6,7 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.InMemoryTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
@@ -69,7 +70,7 @@ fun main(args: Array<String>) {
     val taskRepository: TaskRepository = if (inMemory) {
         InMemoryTaskRepository()
     } else {
-        TODO("Persisted task repo")
+        ExposedTaskRepository(serviceLocator)
     }
 
     serviceLocator.register(
