@@ -22,7 +22,10 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:2.3.8")
     implementation("io.ktor:ktor-server-call-logging:2.3.8")
     implementation("io.ktor:ktor-server-cors:2.3.8")
+    implementation("io.ktor:ktor-server-auth:2.3.8")
+
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.slf4j:slf4j-api:2.0.11")
     implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.22.1")

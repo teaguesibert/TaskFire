@@ -14,6 +14,7 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
+import kotlinx.serialization.json.Json
 
 /**
  * Routes related to accounts.
@@ -31,7 +32,7 @@ fun Routing.accountRoutes() {
     )!!
 
     get("/accounts") {
-        val token = call.receive<AuthToken>()
+        val token = Json.decodeFromString<AuthToken>(call.request.headers["AuthToken"]!!)
 
         if (sessionManager.sessions[token] == null) {
             call.respond(HttpStatusCode.Unauthorized)
@@ -50,7 +51,7 @@ fun Routing.accountRoutes() {
     }
 
     get("/auth") {
-        val account = call.receive<Account>()
+        val account = Json.decodeFromString<Account>(call.request.headers["Account"]!!)
 
         val existingAccount =
             accountRepository.getAccounts().firstOrNull {
