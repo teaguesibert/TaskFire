@@ -12,6 +12,8 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepositor
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.RegistrationStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -104,7 +106,12 @@ fun main(args: Array<String>) {
             }
 
             install(CallLogging)
-            install(CORS)
+            install(CORS) {
+                anyHost()
+                allowHeader(HttpHeaders.ContentType)
+                allowMethod(HttpMethod.Get)
+                allowMethod(HttpMethod.Post)
+            }
 
             routing {
                 get("/") {
