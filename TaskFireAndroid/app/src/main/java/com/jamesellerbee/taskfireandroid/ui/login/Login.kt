@@ -63,9 +63,8 @@ fun Login(serviceLocator: ServiceLocator, modifier: Modifier = Modifier) {
 
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.background,
-
-                ),
+                containerColor = MaterialTheme.colorScheme.background
+            ),
             modifier = Modifier.padding(8.dp)
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -110,7 +109,12 @@ fun Login(serviceLocator: ServiceLocator, modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(onClick = {
-
+                        loginViewModel.onInteraction(
+                            LoginInteraction.Login(
+                                username = username,
+                                password = password
+                            )
+                        )
                     }) {
                         Text(text = "Sign in")
                     }

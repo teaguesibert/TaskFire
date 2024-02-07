@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.jamesellerbee.taskfireandroid.ui.home.Home
 import com.jamesellerbee.taskfireandroid.ui.login.Login
 import com.jamesellerbee.taskfireandroid.util.ServiceLocator
 
@@ -22,5 +23,7 @@ fun App(serviceLocator: ServiceLocator) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.secondaryContainer)
         )
+    } else {
+        Home()
     }
 }

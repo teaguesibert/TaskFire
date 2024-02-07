@@ -35,7 +35,7 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
                     when (response.code()) {
                         200 -> {
                             _message.value = Pair(false, "Success.")
-
+                            taskFireApi.authToken = response.body()
                         }
 
                         else -> {

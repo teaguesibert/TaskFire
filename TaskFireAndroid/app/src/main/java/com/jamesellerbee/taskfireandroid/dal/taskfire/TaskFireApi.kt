@@ -16,4 +16,6 @@ class TaskFireApi(baseUrl: String) {
 
     private val _authenticated = MutableStateFlow(false)
     val authenticated = _authenticated.asStateFlow()
+
+    var authToken: AuthToken? = null
 }

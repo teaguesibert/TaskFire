@@ -2,6 +2,10 @@ package com.jamesellerbee.taskfireandroid.dal.taskfire
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.HTTP
+import retrofit2.http.Header
+import retrofit2.http.Headers
 import retrofit2.http.POST
 
 data class Account(
@@ -20,6 +24,7 @@ interface TaskFireService {
     @POST("/register")
     fun register(@Body account: Account): Call<Unit>
 
-    @POST("/auth")
+    @Headers("Content-Type: application/json")
+    @HTTP(method  = "GET", path = "/auth", hasBody = true)
     fun auth(@Body account: Account): Call<AuthToken>
 }
