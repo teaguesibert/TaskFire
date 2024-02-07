@@ -2,7 +2,7 @@ package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task
 
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.auth.authToPerformUserAction
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.AuthToken
-import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.TaskWrapper
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Task
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
@@ -13,6 +13,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import kotlinx.serialization.json.Json
 
 fun Routing.taskRoutes() {
     val serviceLocator = ServiceLocator.instance
@@ -32,7 +33,7 @@ fun Routing.taskRoutes() {
 
         authToPerformUserAction(
             call = call,
-            token = call.receive<AuthToken>(),
+            token = Json.decodeFromString<AuthToken>(call.request.headers["AuthToken"]!!),
             accountIdEffected = accountId
         ) {
             val tasks = taskRepository.getTasksByAccountId(accountId)
@@ -47,14 +48,14 @@ fun Routing.taskRoutes() {
             return@post
         }
 
-        val taskWrapper = call.receive<TaskWrapper>()
+        val task = call.receive<Task>()
 
         authToPerformUserAction(
             call = call,
-            token = taskWrapper.authToken,
+            token = Json.decodeFromString<AuthToken>(call.request.headers["AuthToken"]!!),
             accountIdEffected = accountId
         ) {
-            taskRepository.addTask(accountId, taskWrapper.task)
+            taskRepository.addTask(accountId, task)
             call.respond(HttpStatusCode.OK)
         }
     }
