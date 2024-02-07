@@ -21,6 +21,7 @@ dependencies {
     implementation("io.ktor:ktor-server-default-headers-jvm:2.3.8")
     implementation("io.ktor:ktor-server-content-negotiation:2.3.8")
     implementation("io.ktor:ktor-server-call-logging:2.3.8")
+    implementation("io.ktor:ktor-server-cors:2.3.8")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.slf4j:slf4j-api:2.0.11")
