@@ -1,5 +1,6 @@
 package com.jamesellerbee.taskfireandroid.ui.login
 
+import com.google.gson.Gson
 import com.jamesellerbee.taskfireandroid.dal.taskfire.Account
 import com.jamesellerbee.taskfireandroid.dal.taskfire.TaskFireApi
 import com.jamesellerbee.taskfireandroid.util.ResolutionStrategy
@@ -26,15 +27,17 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
             is LoginInteraction.Login -> {
                 CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
                     val response = taskFireApi.taskFireService.auth(
-                        Account(
-                            interaction.username,
-                            interaction.password
+                        Gson().toJson(
+                            Account(
+                                interaction.username,
+                                interaction.password
+                            )
                         )
                     ).execute()
 
                     when (response.code()) {
                         200 -> {
-                            _message.value = Pair(false, "Success.")
+                            _message.value = Pair(false, "Sign in successful!")
                             taskFireApi.authToken = response.body()
                         }
 
@@ -61,7 +64,7 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
                         }
 
                         200 -> {
-                            _message.value = Pair(false, "Success!")
+                            _message.value = Pair(false, "Create account Successful!")
                         }
                     }
                 }

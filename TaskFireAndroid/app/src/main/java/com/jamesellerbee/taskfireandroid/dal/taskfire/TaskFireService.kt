@@ -24,7 +24,7 @@ interface TaskFireService {
     @POST("/register")
     fun register(@Body account: Account): Call<Unit>
 
-    @Headers("Content-Type: application/json")
-    @HTTP(method  = "GET", path = "/auth", hasBody = true)
-    fun auth(@Body account: Account): Call<AuthToken>
+
+    @GET("/auth")
+    fun auth(@Header("Account") account: String): Call<AuthToken>
 }
