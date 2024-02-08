@@ -50,8 +50,8 @@ fun Routing.accountRoutes() {
         call.respond(message)
     }
 
-    get("/auth") {
-        val account = Json.decodeFromString<Account>(call.request.headers["Account"]!!)
+    post("/auth") {
+        val account = call.receive<Account>()
 
         val existingAccount =
             accountRepository.getAccounts().firstOrNull {
