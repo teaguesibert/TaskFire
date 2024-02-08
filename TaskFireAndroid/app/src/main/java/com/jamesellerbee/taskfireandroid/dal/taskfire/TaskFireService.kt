@@ -25,6 +25,6 @@ interface TaskFireService {
     fun register(@Body account: Account): Call<Unit>
 
 
-    @GET("/auth")
-    fun auth(@Header("Account") account: String): Call<AuthToken>
+    @POST("/auth")
+    fun auth(@Body account: Account): Call<AuthToken>
 }

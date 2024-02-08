@@ -1,10 +1,10 @@
 package com.jamesellerbee.taskfireandroid.ui.login
 
-import com.google.gson.Gson
 import com.jamesellerbee.taskfireandroid.dal.taskfire.Account
 import com.jamesellerbee.taskfireandroid.dal.taskfire.TaskFireApi
 import com.jamesellerbee.taskfireandroid.util.ResolutionStrategy
 import com.jamesellerbee.taskfireandroid.util.ServiceLocator
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,20 +25,25 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
     fun onInteraction(interaction: LoginInteraction) {
         when (interaction) {
             is LoginInteraction.Login -> {
-                CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+                CoroutineScope(SupervisorJob()).launch(Dispatchers.IO + CoroutineExceptionHandler { _, t ->
+                    t.printStackTrace()
+                    _message.value = Pair(true, "Something went wrong... try again.")
+                }) {
                     val response = taskFireApi.taskFireService.auth(
-                        Gson().toJson(
-                            Account(
-                                interaction.username,
-                                interaction.password
-                            )
+                        Account(
+                            interaction.username,
+                            interaction.password
                         )
                     ).execute()
 
                     when (response.code()) {
                         200 -> {
-                            _message.value = Pair(false, "Sign in successful!")
-                            taskFireApi.authToken = response.body()
+                            response.body()?.let {
+                                _message.value = Pair(false, "Sign in successful!")
+                                taskFireApi.setAuthToken(response.body()!!)
+                            } ?: run {
+                                _message.value = Pair(true, "Something unexpected happened.")
+                            }
                         }
 
                         else -> {
@@ -49,7 +54,9 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
             }
 
             is LoginInteraction.Register -> {
-                CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+                CoroutineScope(SupervisorJob()).launch(Dispatchers.IO + CoroutineExceptionHandler { _, t ->
+                    _message.value = Pair(true, "Something went wrong... try again.")
+                }) {
                     val response = taskFireApi.taskFireService.register(
                         Account(
                             interaction.username,
@@ -65,6 +72,12 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
 
                         200 -> {
                             _message.value = Pair(false, "Create account Successful!")
+                        }
+
+                        else -> {
+                            _message.value =
+                                Pair(true, "There was an issue with your registration.")
+
                         }
                     }
                 }
