@@ -1,8 +1,9 @@
 package com.jamesellerbee.taskfire.tasktrackerapi.app
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account.accountRoutes
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task.taskRoutes
-import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.session.SessionManager
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAccountRepository
@@ -17,6 +18,9 @@ import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.callloging.CallLogging
@@ -68,7 +72,6 @@ fun main(args: Array<String>) {
         ExposedAccountRepository(serviceLocator)
     }
 
-    val sessionManager = SessionManager()
 
     val taskRepository: TaskRepository = if (inMemory) {
         InMemoryTaskRepository()
@@ -80,13 +83,6 @@ fun main(args: Array<String>) {
         RegistrationStrategy.Singleton(
             type = AccountRepository::class,
             service = accountRepository
-        )
-    )
-
-    serviceLocator.register(
-        RegistrationStrategy.Singleton(
-            type = SessionManager::class,
-            service = sessionManager
         )
     )
 
@@ -106,11 +102,36 @@ fun main(args: Array<String>) {
             }
 
             install(CallLogging)
+
             install(CORS) {
                 anyHost()
+
                 allowHeader(HttpHeaders.ContentType)
+                allowHeader(HttpHeaders.AccessControlAllowOrigin)
+                allowHeader(HttpHeaders.Authorization)
+
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Post)
+                allowMethod(HttpMethod.Options)
+            }
+
+            install(Authentication) {
+                jwt("auth-jwt") {
+                    verifier(
+                        JWT.require(Algorithm.HMAC256("secret"))
+                            .withIssuer("https://0.0.0.0:8080")
+                            .withAudience("https://0.0.0.0:8080")
+                            .build()
+                    )
+
+                    validate { credential ->
+                        if (credential.payload.getClaim("accountId").asString() != "") {
+                            JWTPrincipal(credential.payload)
+                        } else {
+                            null
+                        }
+                    }
+                }
             }
 
             routing {
