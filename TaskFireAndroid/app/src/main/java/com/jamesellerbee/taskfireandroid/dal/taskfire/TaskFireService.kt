@@ -26,7 +26,7 @@ data class Task(
     val accountId: String,
     val created: Long,
     val modified: Long = 0,
-    val completed: Boolean,
+    val completed: Boolean = false,
     val description: String = "",
     val taskId: String = ""
 )
@@ -40,5 +40,15 @@ interface TaskFireService {
     fun auth(@Body account: Account): Call<AuthToken>
 
     @GET("/tasks/{accountId}")
-    fun getTasks(@Path("accountId") accountId: String): Call<List<Task>>
+    fun getTasks(
+        @Header("AuthToken") authToken: String,
+        @Path("accountId") accountId: String
+    ): Call<List<Task>>
+
+    @POST("/tasks/{accountId}")
+    fun createTask(
+        @Header("AuthToken") authToken: String,
+        @Path("accountId") accountId: String,
+        @Body task: Task
+    ): Call<Unit>
 }

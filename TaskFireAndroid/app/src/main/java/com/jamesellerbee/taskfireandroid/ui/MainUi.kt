@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,31 +16,31 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.jamesellerbee.taskfireandroid.bl.page.PageProvider
+import com.jamesellerbee.taskfireandroid.ui.task.TaskPage
 import com.jamesellerbee.taskfireandroid.ui.theme.TaskFireAndroidTheme
-
-enum class Page {
-    HOME
-}
+import com.jamesellerbee.taskfireandroid.util.RegistrationStrategy
+import com.jamesellerbee.taskfireandroid.util.ResolutionStrategy
+import com.jamesellerbee.taskfireandroid.util.ServiceLocator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainUI() {
-    var selectedPage by remember { mutableStateOf(Page.HOME) }
+fun MainUI(serviceLocator: ServiceLocator) {
+    val pageProvider =
+        serviceLocator.resolve<PageProvider>(ResolutionStrategy.ByType(PageProvider::class))!!
+
+    val selectedPage = pageProvider.selectedPage.collectAsState().value
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = when (selectedPage) {
-                            Page.HOME -> "Tasks"
-                        }
+                        text = selectedPage.titleText
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -56,27 +53,25 @@ fun MainUI() {
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    IconButton(onClick = {
-                        selectedPage = Page.HOME
-                    }) {
-                        Icon(
-                            imageVector = if (selectedPage == Page.HOME) {
-                                Icons.Filled.Home
-                            } else {
-                                Icons.Outlined.Home
-                            }, contentDescription = "Navigate to home page"
-                        )
+                    pageProvider.availablePages.forEach { page ->
+                        IconButton(onClick = {
+                            pageProvider.setSelectedPage(page)
+                        }) {
+                            Icon(
+                                imageVector = if (selectedPage == page) {
+                                    page.selectedIcon
+                                } else {
+                                    page.icon
+                                }, contentDescription = "Navigate to page"
+                            )
+                        }
                     }
                 }
             }
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            when (selectedPage) {
-                Page.HOME -> {
-
-                }
-            }
+            selectedPage.content()
         }
     }
 }
@@ -84,9 +79,26 @@ fun MainUI() {
 @Preview
 @Composable
 fun MainUiPreview() {
+    val serviceLocator = ServiceLocator()
+
+    val initialPage = TaskPage(serviceLocator)
+    val pageProvider = PageProvider(
+        initialPage = initialPage,
+        availablePages = listOf(
+            initialPage
+        )
+    )
+
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = PageProvider::class,
+            service = pageProvider
+        )
+    )
+
     TaskFireAndroidTheme {
         Surface {
-            MainUI()
+            MainUI(serviceLocator)
         }
     }
 }

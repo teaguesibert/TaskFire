@@ -23,6 +23,6 @@ fun App(serviceLocator: ServiceLocator) {
                 .background(MaterialTheme.colorScheme.secondaryContainer)
         )
     } else {
-        MainUI()
+        MainUI(serviceLocator)
     }
 }
