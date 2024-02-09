@@ -59,17 +59,16 @@ fun Routing.accountRoutes() {
                         && it.password == account.password
             }
 
-        val message = if (existingAccount != null) {
+        if (existingAccount != null) {
             val auth = AuthToken(UUID.randomUUID().toString(), existingAccount.id, System.currentTimeMillis())
 
             // Store session, overwriting any previous sessions for this account
             sessionManager.addSession(auth, existingAccount)
-            auth
-        } else {
-            AuthToken()
-        }
+            call.respond(auth)
 
-        call.respond(message)
+        } else {
+            call.respond(HttpStatusCode.Unauthorized)
+        }
     }
 
     post("/register") {
