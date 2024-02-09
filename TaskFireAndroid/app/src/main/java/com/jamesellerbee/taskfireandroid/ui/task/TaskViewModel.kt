@@ -32,7 +32,7 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
 
     fun onInteraction(interaction: TaskInteraction) {
         when (interaction) {
-            is TaskInteraction.CreateTask -> {
+            is TaskInteraction.UpsertTask -> {
                 CoroutineScope(Dispatchers.IO).launch(CoroutineExceptionHandler { coroutineContext, throwable ->
                     throwable.printStackTrace()
                 }) {

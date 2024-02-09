@@ -70,7 +70,7 @@ fun MainUI(serviceLocator: ServiceLocator) {
             }
         }
     ) {
-        Column(modifier = Modifier.padding(it)) {
+        Surface(Modifier.padding(it)) {
             selectedPage.content()
         }
     }

@@ -23,11 +23,11 @@ data class AuthToken(
 
 data class Task(
     val title: String,
-    val accountId: String,
     val created: Long,
+    val accountId: String = "",
+    val description: String = "",
     val modified: Long = 0,
     val completed: Boolean = false,
-    val description: String = "",
     val taskId: String = ""
 )
 
