@@ -17,11 +17,18 @@ class TaskFireApi(baseUrl: String) {
     private val _authenticated = MutableStateFlow(false)
     val authenticated = _authenticated.asStateFlow()
 
-    private var _authToken: AuthToken? = null
+    private var _authToken: String? = null
     val authToken get() = _authToken!!
 
-    fun setAuthToken(token: AuthToken) {
-        _authToken = token
+    private var _accountId: String? = null
+    val accountId get() = _accountId!!
+
+    fun setAuthToken(token: String) {
+        _authToken = "Bearer $token"
         _authenticated.value = true
+    }
+
+    fun setAccountId(accountId: String) {
+        _accountId = accountId
     }
 }

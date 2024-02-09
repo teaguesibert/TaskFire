@@ -43,7 +43,7 @@ fun MainUI(serviceLocator: ServiceLocator) {
                         text = selectedPage.titleText
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             )
         },
         bottomBar = {

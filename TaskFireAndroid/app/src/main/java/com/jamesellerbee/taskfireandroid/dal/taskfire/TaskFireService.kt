@@ -15,12 +15,6 @@ data class Account(
     val id: String = "",
 )
 
-data class AuthToken(
-    val sessionId: String = "",
-    val accountId: String = "",
-    val timeStamp: Long = 0
-)
-
 data class Task(
     val title: String,
     val created: Long,
@@ -31,23 +25,27 @@ data class Task(
     val taskId: String = ""
 )
 
+data class AuthResponse(
+    val token: String,
+    val id: String
+)
+
 interface TaskFireService {
     @POST("/register")
     fun register(@Body account: Account): Call<Unit>
 
-
     @POST("/auth")
-    fun auth(@Body account: Account): Call<AuthToken>
+    fun auth(@Body account: Account): Call<AuthResponse>
 
     @GET("/tasks/{accountId}")
     fun getTasks(
-        @Header("AuthToken") authToken: String,
+        @Header("Authorization") authToken: String,
         @Path("accountId") accountId: String
     ): Call<List<Task>>
 
     @POST("/tasks/{accountId}")
     fun createTask(
-        @Header("AuthToken") authToken: String,
+        @Header("Authorization") authToken: String,
         @Path("accountId") accountId: String,
         @Body task: Task
     ): Call<Unit>

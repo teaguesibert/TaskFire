@@ -37,8 +37,8 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
                     throwable.printStackTrace()
                 }) {
                     taskFireApi.taskFireService.createTask(
-                        authToken = Gson().toJson(taskFireApi.authToken),
-                        accountId = taskFireApi.authToken.accountId,
+                        authToken = taskFireApi.authToken,
+                        accountId = taskFireApi.accountId,
                         task = interaction.task
                     ).execute()
 
@@ -50,8 +50,8 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
 
     fun refreshList() {
         val response = taskFireApi.taskFireService.getTasks(
-            Gson().toJson(taskFireApi.authToken),
-            taskFireApi.authToken.accountId
+            authToken = taskFireApi.authToken,
+            accountId = taskFireApi.accountId,
         ).execute()
 
         if (response.isSuccessful) {

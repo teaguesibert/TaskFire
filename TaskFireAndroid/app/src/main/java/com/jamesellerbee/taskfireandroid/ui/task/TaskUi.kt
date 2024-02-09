@@ -95,12 +95,11 @@ fun Task(serviceLocator: ServiceLocator) {
         ) { paddingValues ->
             Surface(Modifier.padding(paddingValues)) {
                 Column {
-                    Text("Tasks")
                     val tasks = viewModel.tasks.collectAsState().value
                     if (tasks.isEmpty()) {
                         Text("There are no tasks. Getting started by adding some.")
                     } else {
-                        LazyColumn {
+                        LazyColumn(Modifier.padding(top = 12.dp)) {
                             items(tasks) { task ->
                                 Row(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)) {
                                     Card {
@@ -112,7 +111,13 @@ fun Task(serviceLocator: ServiceLocator) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Checkbox(
                                                     checked = task.completed,
-                                                    onCheckedChange = {},
+                                                    onCheckedChange = {
+                                                        viewModel.onInteraction(
+                                                            TaskInteraction.UpsertTask(
+                                                                task.copy(completed = !task.completed)
+                                                            )
+                                                        )
+                                                    },
                                                 )
 
                                                 Text(
@@ -133,24 +138,24 @@ fun Task(serviceLocator: ServiceLocator) {
                                                 )
                                             }
 
-                                            Row(Modifier.fillMaxWidth()) {
-                                                Spacer(modifier = Modifier.weight(1f))
-                                                ClickableText(
-                                                    text = AnnotatedString(
-                                                        if (task.completed) {
-                                                            "Mark as not completed"
-                                                        } else {
-                                                            "Mark as complete"
-                                                        }
-                                                    ), onClick = {
-                                                        viewModel.onInteraction(
-                                                            TaskInteraction.UpsertTask(
-                                                                task.copy(completed = !task.completed)
-                                                            )
-                                                        )
-                                                    }
-                                                )
-                                            }
+//                                            Row(Modifier.fillMaxWidth()) {
+//                                                Spacer(modifier = Modifier.weight(1f))
+//                                                ClickableText(
+//                                                    text = AnnotatedString(
+//                                                        if (task.completed) {
+//                                                            "Mark as not completed"
+//                                                        } else {
+//                                                            "Mark as complete"
+//                                                        }
+//                                                    ), onClick = {
+//                                                        viewModel.onInteraction(
+//                                                            TaskInteraction.UpsertTask(
+//                                                                task.copy(completed = !task.completed)
+//                                                            )
+//                                                        )
+//                                                    }
+//                                                )
+//                                            }
                                         }
                                     }
                                 }

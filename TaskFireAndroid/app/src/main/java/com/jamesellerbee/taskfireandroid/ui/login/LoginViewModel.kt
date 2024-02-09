@@ -40,7 +40,9 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
                         200 -> {
                             response.body()?.let {
                                 _message.value = Pair(false, "Sign in successful!")
-                                taskFireApi.setAuthToken(response.body()!!)
+                                val authResponse = response.body()!!
+                                taskFireApi.setAccountId(authResponse.id)
+                                taskFireApi.setAuthToken(authResponse.token)
                             } ?: run {
                                 _message.value = Pair(true, "Something unexpected happened.")
                             }
