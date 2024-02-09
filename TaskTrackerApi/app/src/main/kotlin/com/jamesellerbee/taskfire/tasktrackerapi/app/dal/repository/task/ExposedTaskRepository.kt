@@ -26,11 +26,18 @@ class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
     }
 
     override fun addTask(accountId: String, task: Task) {
-        TODO("Not yet implemented")
-    }
-
-    override fun getTasks(): List<Task> {
-        TODO("Not yet implemented")
+        transaction {
+            TaskEntity.find { Tasks.taskId eq task.taskId }.firstOrNull()?.delete()
+            TaskEntity.new {
+                title = task.title
+                this.accountId = task.accountId
+                created = task.created
+                modified = task.modified
+                completed = task.completed
+                description = task.description
+                tasksId = task.taskId
+            }
+        }
     }
 
     object Tasks : IntIdTable() {
