@@ -1,4 +1,4 @@
-package com.jamesellerbee.tasktrackerapi.app.util
+package com.jamesellerbee.taskfire.tasktrackerapi.app.util
 
 sealed class RegistrationStrategy {
     data class Singleton(val type: Any, val service: Any) : RegistrationStrategy()
