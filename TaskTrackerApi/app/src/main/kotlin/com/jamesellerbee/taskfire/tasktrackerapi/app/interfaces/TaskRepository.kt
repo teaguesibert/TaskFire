@@ -6,4 +6,6 @@ interface TaskRepository {
     fun getTasksByAccountId(accountId: String): List<Task>
 
     fun addTask(accountId: String, task: Task)
+
+    fun removeTask(accountId: String, taskId: String)
 }

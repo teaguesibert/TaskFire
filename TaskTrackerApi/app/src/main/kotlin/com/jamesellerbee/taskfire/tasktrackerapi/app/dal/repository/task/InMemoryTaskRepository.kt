@@ -15,4 +15,9 @@ class InMemoryTaskRepository : TaskRepository {
         tasks?.removeIf { it.taskId == task.taskId }
         taskMap.computeIfAbsent(accountId) { mutableListOf() }.add(task)
     }
+
+    override fun removeTask(accountId: String, taskId: String) {
+        val tasks = taskMap[accountId]
+        tasks?.removeIf { it.taskId == taskId }
+    }
 }

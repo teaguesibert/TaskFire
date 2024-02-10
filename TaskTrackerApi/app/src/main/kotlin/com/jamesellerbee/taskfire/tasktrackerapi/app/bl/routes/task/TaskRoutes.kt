@@ -12,8 +12,10 @@ import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import java.util.UUID
 
 fun Routing.taskRoutes() {
     val serviceLocator = ServiceLocator.instance
@@ -27,9 +29,9 @@ fun Routing.taskRoutes() {
     authenticate("auth-jwt") {
         get("/tasks/{accountId}") {
             val principal = call.principal<JWTPrincipal>()!!
-
             val accountIdClaim = principal.getClaim("accountId", String::class)
             val accountId = call.parameters["accountId"]
+
             if (accountId == null) {
                 call.respond(HttpStatusCode.BadRequest)
                 return@get
@@ -45,15 +47,42 @@ fun Routing.taskRoutes() {
         }
 
         post("/tasks/{accountId}") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val accountIdClaim = principal.getClaim("accountId", String::class)
             val accountId = call.parameters["accountId"]
+
             if (accountId == null) {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             }
 
+            if (accountId != accountIdClaim) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+
             val task = call.receive<Task>()
-            taskRepository.addTask(accountId, task)
+            taskRepository.addTask(accountId, task.copy(taskId = UUID.randomUUID().toString(), modified = System.currentTimeMillis()))
             call.respond(HttpStatusCode.OK)
+        }
+
+        delete("/tasks/{accountId}/{taskId}") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val accountIdClaim = principal.getClaim("accountId", String::class)
+            val accountId = call.parameters["accountId"]
+            val taskId = call.parameters["taskId"]
+
+            if (accountId == null || taskId == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@delete
+            }
+
+            if (accountId != accountIdClaim) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@delete
+            }
+
+            taskRepository.removeTask(accountId, taskId)
         }
     }
 }
