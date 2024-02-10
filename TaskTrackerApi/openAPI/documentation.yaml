@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Task Fire Api
+  description: Task fire api
+  version: 1.0.0
+servers:
+  - url: 'https//0.0.0.0'
+
+tags:
+  - name: accounts
+    description: Authentication and registration
+
+paths:
+  /accounts:
+    get:
+      tags:
+        - accounts
+      summary: Returns a list of accounts
+      description: Returns a list of accounts that your token can access with each account's password obfuscated
+      parameters:
+        - name: name
+          schema:
+            type: string
+            example: Bob
+          allowReserved: false
+          in: path
+          deprecated: false
+          description: The name of the account to include in the response
+          required: false
+          explode: false
+          allowEmptyValue: false
+          style: matrix
+      responses:
+        200:
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+
+  /auth:
+    post:
+      tags:
+        - accounts
+      summary: Provides the account ID and JWT token.
+      description: Provides a json object containing the account ID of the account used to authenticate and the JWT token to access protected routes.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        200:
+          description: Json object containing the JWT token and ID of the account used to authenticate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountIdJwtTokenPair'
+
+  /regiseter:
+    post:
+      tags:
+        - accounts
+      summary: Creates a new account
+      description: Creates a new account from the provided name and password from the request body.
+      requestBody:
+      responses:
+        200:
+          description: Account json object with obfuscated password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Bob
+
+        password:
+          type: string
+          example: Hunter2
+
+        id:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          readOnly: true
+
+      required:
+        - name
+
+    AccountIdJwtTokenPair:
+      type: object
+      properties:
+        token:
+          type: string
+          example: acbde...1234
+
+        id:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef

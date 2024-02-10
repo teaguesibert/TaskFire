@@ -46,7 +46,7 @@ fun Routing.taskRoutes() {
             call.respond(tasks)
         }
 
-        post("/tasks/{accountId}") {
+        post(path = "/tasks/{accountId}") {
             val principal = call.principal<JWTPrincipal>()!!
             val accountIdClaim = principal.getClaim("accountId", String::class)
             val accountId = call.parameters["accountId"]
@@ -66,7 +66,7 @@ fun Routing.taskRoutes() {
             call.respond(HttpStatusCode.OK)
         }
 
-        delete("/tasks/{accountId}/{taskId}") {
+        delete(path = "/tasks/{accountId}/{taskId}") {
             val principal = call.principal<JWTPrincipal>()!!
             val accountIdClaim = principal.getClaim("accountId", String::class)
             val accountId = call.parameters["accountId"]

@@ -29,7 +29,7 @@ fun Routing.accountRoutes() {
     )!!
 
     authenticate("auth-jwt") {
-        get("/accounts") {
+        get(path = "/accounts") {
             val principal = call.principal<JWTPrincipal>()!!
 
             val accountIdClaim = principal.getClaim("accountId", String::class)
@@ -49,7 +49,7 @@ fun Routing.accountRoutes() {
         }
     }
 
-    post("/auth") {
+    post(path = "/auth") {
         val account = call.receive<Account>()
 
         val existingAccount =
@@ -71,7 +71,7 @@ fun Routing.accountRoutes() {
         }
     }
 
-    post("/register") {
+    post(path = "/register") {
         val newAccount = call.receive<Account>()
 
         if (newAccount.password.isBlank()) {
