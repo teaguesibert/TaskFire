@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: Task Fire Api
+  description: Task fire api
+  version: 1.0.0
+servers:
+  - url: 'https//0.0.0.0'
+
+tags:
+  - name: accounts
+    description: Authentication and registration
+  - name: tasks
+    description: CRUD operations for Tasks associated with an account..
+
+paths:
+  /accounts:
+    get:
+      tags:
+        - accounts
+      summary: Returns a list of accounts
+      description: Returns a list of accounts that your token can access with each account's password obfuscated
+      parameters:
+        - name: name
+          schema:
+            type: string
+            example: Bob
+          allowReserved: false
+          in: path
+          deprecated: false
+          description: The name of the account to include in the response
+          required: false
+          explode: false
+          allowEmptyValue: false
+          style: matrix
+      responses:
+        200:
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+
+  /auth:
+    post:
+      tags:
+        - accounts
+      summary: Provides the account ID and JWT token.
+      description: Provides a json object containing the account ID of the account used to authenticate and the JWT token to access protected routes.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        200:
+          description: Json object containing the JWT token and ID of the account used to authenticate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountIdJwtTokenPair'
+
+  /register:
+    post:
+      tags:
+        - accounts
+      summary: Creates a new account
+      description: Creates a new account from the provided name and password from the request body.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        200:
+          description: Account json object with obfuscated password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+
+  /tasks/{accountId}:
+    get:
+      tags:
+        - tasks
+      summary: Returns a list of tasks.
+      description:  Returns a list of tasks associated with the provided `accountId`.
+      responses:
+        200:
+          description: List of Tasks json objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      tags:
+        - tasks
+      summary: Create a new task or update existing task.
+      description: Create a new task or update existing task if the `taskId` value matches an existing task.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        200:
+          description: Task created successfully.
+
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Bob
+
+        password:
+          type: string
+          example: Hunter2
+
+        id:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          readOnly: true
+
+      required:
+        - name
+
+    Task:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Do the dishes
+          required: true
+        accountId:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          required: true
+        created:
+          type: integer
+          example: 1707607550
+        modified:
+          type: integer
+          example: 1707607551
+          readOnly: true
+        completed:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "Optional description string"
+        taskId:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          readOnly: true
+
+    AccountIdJwtTokenPair:
+      type: object
+      properties:
+        token:
+          type: string
+          example: acbde...1234
+
+        id:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef

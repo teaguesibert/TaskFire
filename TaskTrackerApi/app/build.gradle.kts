@@ -24,6 +24,8 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:2.3.8")
     implementation("io.ktor:ktor-server-auth:2.3.8")
     implementation("io.ktor:ktor-server-auth-jwt:2.3.8")
+    implementation("io.ktor:ktor-network-tls-certificates:2.3.8")
+    implementation("io.ktor:ktor-server-openapi:2.3.8")
 
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
 

@@ -8,6 +8,7 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
@@ -38,6 +39,10 @@ class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
                 tasksId = task.taskId
             }
         }
+    }
+
+    override fun removeTask(accountId: String, taskId: String) {
+        TaskEntity.find { (Tasks.taskId eq taskId) and (Tasks.accountId eq accountId) }
     }
 
     object Tasks : IntIdTable() {

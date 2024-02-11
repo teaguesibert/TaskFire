@@ -3,6 +3,7 @@ package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
@@ -17,21 +18,28 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 /**
  * Routes related to accounts.
  */
 fun Routing.accountRoutes() {
+    val logger = LoggerFactory.getLogger("accountRoutes")
+
     val serviceLocator = ServiceLocator.instance
 
     val accountRepository = serviceLocator.resolve<AccountRepository>(
         ResolutionStrategy.ByType(type = AccountRepository::class)
     )!!
 
-    authenticate("auth-jwt") {
-        get("/accounts") {
-            val principal = call.principal<JWTPrincipal>()!!
+    val applicationProperties = serviceLocator.resolve<ApplicationProperties>(
+        ResolutionStrategy.ByType(type = ApplicationProperties::class)
+    )!!
 
+    authenticate("auth-jwt") {
+
+        get(path = "/accounts") {
+            val principal = call.principal<JWTPrincipal>()!!
             val accountIdClaim = principal.getClaim("accountId", String::class)
 
             val message = if (call.request.queryParameters["name"] == null) {
@@ -49,7 +57,7 @@ fun Routing.accountRoutes() {
         }
     }
 
-    post("/auth") {
+    post(path = "/auth") {
         val account = call.receive<Account>()
 
         val existingAccount =
@@ -59,11 +67,12 @@ fun Routing.accountRoutes() {
             }
 
         if (existingAccount != null) {
+            logger.info("Creating JWT token with account id claim \"${existingAccount.id}\"")
             val token = JWT.create()
-                .withIssuer("https://0.0.0.0:8080")
-                .withAudience("https://0.0.0.0:8080")
+                .withIssuer("https://0.0.0.0")
+                .withAudience("https://0.0.0.0")
                 .withClaim("accountId", existingAccount.id)
-                .sign(Algorithm.HMAC256("secret"))
+                .sign(Algorithm.HMAC256(applicationProperties["secret"] as String))
 
             call.respond(hashMapOf("token" to token, "id" to existingAccount.id))
         } else {
@@ -71,7 +80,7 @@ fun Routing.accountRoutes() {
         }
     }
 
-    post("/register") {
+    post(path = "/register") {
         val newAccount = call.receive<Account>()
 
         if (newAccount.password.isBlank()) {
@@ -82,6 +91,7 @@ fun Routing.accountRoutes() {
                 account.name == newAccount.name
             }) {
             val accountId = UUID.randomUUID().toString()
+            logger.info("Created new account with ID $accountId")
             val amendedAccount = newAccount.copy(id = accountId)
             accountRepository.addAccount(amendedAccount)
             call.respond(amendedAccount.copy(password = ""))

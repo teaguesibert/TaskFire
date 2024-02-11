@@ -11,12 +11,12 @@ class ApplicationProperties(private val path: String) {
         it.load(File(path).reader())
     }
 
-    operator fun <T> get(key: String): Any? {
+    operator fun get(key: String): Any? {
         return properties[key]
     }
 
-    fun get(key: String, defaultValue: Any): Any {
-        return properties[key] ?: defaultValue
+    fun <T> get(key: String, defaultValue: T): T {
+        return properties.getOrDefault(key, defaultValue) as T
     }
 
     operator fun set(key: String, value: Any) {
