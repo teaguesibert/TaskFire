@@ -16,8 +16,10 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 fun Routing.taskRoutes() {
+    val logger = LoggerFactory.getLogger("taskRoutes")
     val serviceLocator = ServiceLocator.instance
 
     val taskRepository = serviceLocator.resolve<TaskRepository>(
@@ -38,7 +40,8 @@ fun Routing.taskRoutes() {
             }
 
             if (accountId != accountIdClaim) {
-                call.respond(HttpStatusCode.Unauthorized)
+                logger.warn("Account id was $accountId but account id claim was $accountIdClaim")
+                call.respond(HttpStatusCode.Unauthorized, "Account ID claim does not match provided account ID")
                 return@get
             }
 
@@ -57,7 +60,8 @@ fun Routing.taskRoutes() {
             }
 
             if (accountId != accountIdClaim) {
-                call.respond(HttpStatusCode.BadRequest)
+                logger.warn("Account id was $accountId but account id claim was $accountIdClaim")
+                call.respond(HttpStatusCode.Unauthorized, "Account ID claim does not match provided account ID")
                 return@post
             }
 
@@ -78,7 +82,8 @@ fun Routing.taskRoutes() {
             }
 
             if (accountId != accountIdClaim) {
-                call.respond(HttpStatusCode.BadRequest)
+                logger.warn("Account id was $accountId but account id claim was $accountIdClaim")
+                call.respond(HttpStatusCode.Unauthorized, "Account ID claim does not match provided account ID")
                 return@delete
             }
 

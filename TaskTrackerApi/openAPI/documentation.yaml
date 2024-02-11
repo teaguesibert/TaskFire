@@ -9,6 +9,8 @@ servers:
 tags:
   - name: accounts
     description: Authentication and registration
+  - name: tasks
+    description: CRUD operations for Tasks associated with an account..
 
 paths:
   /accounts:
@@ -59,13 +61,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccountIdJwtTokenPair'
 
-  /regiseter:
+  /register:
     post:
       tags:
         - accounts
       summary: Creates a new account
       description: Creates a new account from the provided name and password from the request body.
       requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
       responses:
         200:
           description: Account json object with obfuscated password
@@ -73,6 +79,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+
+  /tasks/{accountId}:
+    get:
+      tags:
+        - tasks
+      summary: Returns a list of tasks.
+      description:  Returns a list of tasks associated with the provided `accountId`.
+      responses:
+        200:
+          description: List of Tasks json objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      tags:
+        - tasks
+      summary: Create a new task or update existing task.
+      description: Create a new task or update existing task if the `taskId` value matches an existing task.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        200:
+          description: Task created successfully.
 
 components:
   schemas:
@@ -94,6 +130,35 @@ components:
 
       required:
         - name
+
+    Task:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Do the dishes
+          required: true
+        accountId:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          required: true
+        created:
+          type: integer
+          example: 1707607550
+        modified:
+          type: integer
+          example: 1707607551
+          readOnly: true
+        completed:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "Optional description string"
+        taskId:
+          type: string
+          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          readOnly: true
 
     AccountIdJwtTokenPair:
       type: object

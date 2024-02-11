@@ -165,8 +165,8 @@ fun Application.module() {
         jwt("auth-jwt") {
             verifier(
                 JWT.require(Algorithm.HMAC256(applicationProperties["secret"] as String))
-                    .withIssuer("https://0.0.0.0:8080")
-                    .withAudience("https://0.0.0.0:8080")
+                    .withIssuer("https://0.0.0.0")
+                    .withAudience("https://0.0.0.0")
                     .build()
             )
 
