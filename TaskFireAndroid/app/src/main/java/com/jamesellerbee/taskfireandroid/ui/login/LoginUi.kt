@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -30,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.jamesellerbee.taskfireandroid.R
 import com.jamesellerbee.taskfireandroid.ui.theme.TaskFireAndroidTheme
 import com.jamesellerbee.taskfireandroid.util.ServiceLocator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class Mode {
     LOGIN,
@@ -48,10 +50,19 @@ enum class Mode {
 
 @Composable
 fun Login(serviceLocator: ServiceLocator, modifier: Modifier = Modifier) {
-    val loginViewModel = remember { LoginViewModel(serviceLocator) }
-    val message = loginViewModel.message.collectAsState().value
-
     var mode by remember { mutableStateOf(Mode.LOGIN) }
+
+    val onSuccessfulRegister = suspend {
+        withContext(Dispatchers.Main) {
+            mode = Mode.LOGIN
+        }
+    }
+
+    val loginViewModel =
+        remember { LoginViewModel(serviceLocator, onSuccessfulRegister = onSuccessfulRegister) }
+    val message = loginViewModel.message.collectAsState().value
+    val busy = loginViewModel.busy.collectAsState().value
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -61,7 +72,9 @@ fun Login(serviceLocator: ServiceLocator, modifier: Modifier = Modifier) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxHeight(0.50f).fillMaxWidth()
+            modifier = Modifier
+                .fillMaxHeight(0.50f)
+                .fillMaxWidth()
         ) {
             Box(
                 Modifier
@@ -98,14 +111,19 @@ fun Login(serviceLocator: ServiceLocator, modifier: Modifier = Modifier) {
                     )
                 }
 
-                Text(
-                    text = when (mode) {
-                        Mode.LOGIN -> "Login"
-                        Mode.REGISTER -> "Register"
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                Row(horizontalArrangement = Arrangement.Center ,modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = when (mode) {
+                            Mode.LOGIN -> "Login"
+                            Mode.REGISTER -> "Register"
+                        },
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+
+                    if(busy) {
+                        CircularProgressIndicator()
+                    }
+                }
 
                 OutlinedTextField(
                     value = username,

@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val serviceLocator = ServiceLocator.instance
-        val taskFireApi = TaskFireApi("http://192.168.1.68:8080")
+        val taskFireApi = TaskFireApi("https://taskfireapi.jamesellerbee.com")
 
         serviceLocator.register(
             RegistrationStrategy.Singleton(

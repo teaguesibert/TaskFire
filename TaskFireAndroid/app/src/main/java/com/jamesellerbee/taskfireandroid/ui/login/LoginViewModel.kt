@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LoginViewModel(serviceLocator: ServiceLocator) {
+class LoginViewModel(
+    serviceLocator: ServiceLocator,
+    private val onSuccessfulRegister: suspend () -> Unit
+) {
     private val taskFireApi by serviceLocator.resolveLazy<TaskFireApi>(
         ResolutionStrategy.ByType(
             type = TaskFireApi::class
@@ -22,11 +25,16 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
     private val _message = MutableStateFlow<Pair<Boolean, String>?>(null)
     val message = _message.asStateFlow()
 
+    private val _busy = MutableStateFlow(false)
+    val busy = _busy.asStateFlow()
+
     fun onInteraction(interaction: LoginInteraction) {
         when (interaction) {
             is LoginInteraction.Login -> {
+                _busy.value = true
                 CoroutineScope(SupervisorJob()).launch(Dispatchers.IO + CoroutineExceptionHandler { _, t ->
                     t.printStackTrace()
+                    _busy.value = false
                     _message.value = Pair(true, "Something went wrong... try again.")
                 }) {
                     val response = taskFireApi.taskFireService.auth(
@@ -52,12 +60,16 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
                             _message.value = Pair(true, "There was an issue with your sign in.")
                         }
                     }
+
+                    _busy.value = false
                 }
             }
 
             is LoginInteraction.Register -> {
+                _busy.value = true
                 CoroutineScope(SupervisorJob()).launch(Dispatchers.IO + CoroutineExceptionHandler { _, t ->
                     _message.value = Pair(true, "Something went wrong... try again.")
+                    _busy.value = false
                 }) {
                     val response = taskFireApi.taskFireService.register(
                         Account(
@@ -74,6 +86,7 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
 
                         200 -> {
                             _message.value = Pair(false, "Create account Successful!")
+                            onSuccessfulRegister()
                         }
 
                         else -> {
@@ -82,6 +95,8 @@ class LoginViewModel(serviceLocator: ServiceLocator) {
 
                         }
                     }
+
+                    _busy.value = false
                 }
             }
         }

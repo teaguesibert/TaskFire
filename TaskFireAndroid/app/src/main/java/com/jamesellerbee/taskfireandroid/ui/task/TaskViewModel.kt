@@ -33,13 +33,27 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
     fun onInteraction(interaction: TaskInteraction) {
         when (interaction) {
             is TaskInteraction.UpsertTask -> {
-                CoroutineScope(Dispatchers.IO).launch(CoroutineExceptionHandler { coroutineContext, throwable ->
+                CoroutineScope(Dispatchers.IO).launch(CoroutineExceptionHandler { _, throwable ->
                     throwable.printStackTrace()
                 }) {
                     taskFireApi.taskFireService.createTask(
                         authToken = taskFireApi.authToken,
                         accountId = taskFireApi.accountId,
                         task = interaction.task
+                    ).execute()
+
+                    refreshList()
+                }
+            }
+
+            is TaskInteraction.DeleteTask -> {
+                CoroutineScope(Dispatchers.IO).launch(CoroutineExceptionHandler { _, throwable ->
+                    throwable.printStackTrace()
+                }) {
+                    taskFireApi.taskFireService.deleteTask(
+                        authToken = taskFireApi.authToken,
+                        accountId = taskFireApi.accountId,
+                        taskId = interaction.task.taskId
                     ).execute()
 
                     refreshList()

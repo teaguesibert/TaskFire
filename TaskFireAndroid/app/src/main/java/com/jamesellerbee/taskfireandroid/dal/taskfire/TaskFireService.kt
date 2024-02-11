@@ -2,6 +2,7 @@ package com.jamesellerbee.taskfireandroid.dal.taskfire
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.Header
@@ -48,5 +49,12 @@ interface TaskFireService {
         @Header("Authorization") authToken: String,
         @Path("accountId") accountId: String,
         @Body task: Task
+    ): Call<Unit>
+
+    @DELETE("/tasks/{accountId}/{taskId}")
+    fun deleteTask(
+        @Header("Authorization") authToken: String,
+        @Path("accountId") accountId: String,
+        @Path("taskId") taskId: String
     ): Call<Unit>
 }
