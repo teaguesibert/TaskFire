@@ -1,23 +1,24 @@
 package com.jamesellerbee.taskfireandroid.util
 
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
 
-fun Long.toDateString(): String {
+fun Long.toDateString(zoneId: ZoneId = TimeZone.getDefault().toZoneId()): String {
     return DateTimeFormatter.ofPattern("MMM dd")
-        .withZone(TimeZone.getDefault().toZoneId())
+        .withZone(zoneId)
         .format(Instant.ofEpochMilli(this))
 }
 
-fun Long.toTimeString(): String {
+fun Long.toTimeString(zoneId: ZoneId = TimeZone.getDefault().toZoneId()): String {
     return DateTimeFormatter.ofPattern("h:mma")
-        .withZone(TimeZone.getDefault().toZoneId())
+        .withZone(zoneId)
         .format(Instant.ofEpochMilli(this))
 }
 
-fun Long.toDateTimeString(): String {
+fun Long.toDateTimeString(zoneId: ZoneId = TimeZone.getDefault().toZoneId()): String {
     return DateTimeFormatter.ofPattern("MMM dd yyyy, h:mma")
-        .withZone(TimeZone.getDefault().toZoneId())
+        .withZone(zoneId)
         .format(Instant.ofEpochMilli(this))
 }

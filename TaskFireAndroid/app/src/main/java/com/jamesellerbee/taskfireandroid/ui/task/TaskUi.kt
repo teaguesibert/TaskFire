@@ -1,27 +1,31 @@
 package com.jamesellerbee.taskfireandroid.ui.task
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,8 +38,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,19 +52,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.jamesellerbee.taskfireandroid.dal.taskfire.Task
 import com.jamesellerbee.taskfireandroid.util.ServiceLocator
+import com.jamesellerbee.taskfireandroid.util.to12HourFormat
 import com.jamesellerbee.taskfireandroid.util.toDateString
 import com.jamesellerbee.taskfireandroid.util.toDateTimeString
 import com.jamesellerbee.taskfireandroid.util.toTimeString
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 sealed class FormAction {
     data class Submit(val account: Task) : FormAction()
@@ -81,9 +92,14 @@ fun Task(serviceLocator: ServiceLocator) {
         mutableStateOf<Task?>(null)
     }
 
+    BackHandler(enabled = selectedTask != null) {
+        selectedTask = null
+    }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
+        sheetSwipeEnabled = false,
         sheetContent = {
             TaskForm {
                 when (it) {
@@ -102,12 +118,14 @@ fun Task(serviceLocator: ServiceLocator) {
 
         Scaffold(
             floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    scope.launch {
-                        scaffoldState.bottomSheetState.expand()
+                if (selectedTask == null) {
+                    FloatingActionButton(onClick = {
+                        scope.launch {
+                            scaffoldState.bottomSheetState.expand()
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add task")
                     }
-                }) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add task")
                 }
             }
         ) { paddingValues ->
@@ -118,7 +136,11 @@ fun Task(serviceLocator: ServiceLocator) {
                         if (tasks.isEmpty()) {
                             Text("There are no tasks. Getting started by adding some.")
                         } else {
-                            LazyColumn(Modifier.padding(top = 12.dp)) {
+                            LazyColumn(
+                                Modifier
+                                    .padding(top = 12.dp)
+                                    .weight(1f)
+                            ) {
                                 items(tasks) { task ->
                                     Row(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)) {
                                         TaskCard(task, viewModel) {
@@ -246,9 +268,24 @@ fun TaskDetails(selectedTask: Task) {
     Text(text = selectedTask.created.toDateTimeString())
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskForm(onFormAction: (FormAction) -> Unit) {
-    Column(modifier = Modifier.padding(4.dp)) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState()
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .padding(4.dp)
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+    ) {
         var title by remember { mutableStateOf("") }
         var description by remember { mutableStateOf("") }
 
@@ -268,35 +305,137 @@ fun TaskForm(onFormAction: (FormAction) -> Unit) {
             onValueChange = {
                 description = it
             },
-            label = { Text("Description") },
+            label = { Text("Description (optional)") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = {
-                onFormAction(
-                    FormAction.Submit(
-                        Task(
-                            title = title,
-                            description = description,
-                            created = System.currentTimeMillis(),
+        OutlinedTextField(
+            value = datePickerState.selectedDateMillis?.toDateString(ZoneId.of("UTC")) ?: "",
+            onValueChange = {},
+            label = { Text("Due date (optional)") },
+            trailingIcon = {
+                IconButton(onClick = {
+                    datePickerState.setSelection(null)
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Clear date field"
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusEvent {
+                    if (it.isFocused) {
+                        showDatePicker = true
+                        keyboardController?.hide()
+                        coroutineScope.launch {
+                            scrollState.animateScrollTo(scrollState.value + 300)
+                        }
+                    }
+                }
+        )
+
+        if (showDatePicker) {
+            Spacer(Modifier.height(4.dp))
+
+            DatePicker(
+                state = datePickerState,
+                dateValidator = {
+                    it + 8.64e+7 >= Instant.now().truncatedTo(ChronoUnit.DAYS)
+                        .toEpochMilli()
+                }
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = {
+                    showDatePicker = false
+                    focusManager.clearFocus()
+                }) {
+                    Icon(Icons.Default.CheckCircle, "Dismiss date picker")
+                }
+            }
+        }
+
+        if (datePickerState.selectedDateMillis != null) {
+
+            OutlinedTextField(
+                value = "${String.format("%02d", timePickerState.hour)}:${
+                    String.format(
+                        "%02d",
+                        timePickerState.minute
+                    )
+                }".to12HourFormat(),
+                onValueChange = {},
+                label = { Text("Time") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusEvent {
+                        if (it.isFocused) {
+                            keyboardController?.hide()
+                            showTimePicker = true
+                            coroutineScope.launch {
+                                scrollState.animateScrollTo(Int.MAX_VALUE)
+                            }
+                        }
+                    }
+            )
+        }
+
+        if (showTimePicker) {
+            Spacer(modifier = Modifier.height(4.dp))
+
+            TimePicker(
+                state = timePickerState,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = {
+                    showTimePicker = false
+                    focusManager.clearFocus()
+                }) {
+                    Icon(Icons.Default.CheckCircle, "")
+                }
+            }
+        }
+
+        if (!showDatePicker && !showTimePicker) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(onClick = {
+                    onFormAction(
+                        FormAction.Submit(
+                            Task(
+                                title = title,
+                                description = description,
+                                created = System.currentTimeMillis(),
+                            )
                         )
                     )
-                )
 
-                title = ""
-                description = ""
-            }) {
-                Text("Submit")
-            }
+                    title = ""
+                    description = ""
+                }) {
+                    Text("Submit")
+                }
 
-            Button(onClick = {
-                title = ""
-                description = ""
+                Button(onClick = {
+                    title = ""
+                    description = ""
 
-                onFormAction(FormAction.Cancel)
-            }) {
-                Text("Cancel")
+                    onFormAction(FormAction.Cancel)
+                }) {
+                    Text("Cancel")
+                }
             }
         }
     }
