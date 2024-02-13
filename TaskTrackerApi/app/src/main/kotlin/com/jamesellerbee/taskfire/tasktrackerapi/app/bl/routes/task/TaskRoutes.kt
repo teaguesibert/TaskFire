@@ -66,7 +66,20 @@ fun Routing.taskRoutes() {
             }
 
             val task = call.receive<Task>()
-            taskRepository.addTask(accountId, task.copy(taskId = UUID.randomUUID().toString(), modified = System.currentTimeMillis()))
+
+            val amendedTask = if (task.taskId.isBlank()) {
+                logger.info("Creating new task")
+                task.copy(taskId = UUID.randomUUID().toString(), modified = System.currentTimeMillis())
+            } else {
+                logger.info("Update existing task with id ${task.taskId}")
+                task.copy(modified = System.currentTimeMillis())
+            }
+
+            taskRepository.addTask(
+                accountId,
+                amendedTask
+            )
+
             call.respond(HttpStatusCode.OK)
         }
 

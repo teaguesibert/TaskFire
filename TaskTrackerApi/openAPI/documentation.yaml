@@ -4,7 +4,7 @@ info:
   description: Task fire api
   version: 1.0.0
 servers:
-  - url: 'https//0.0.0.0'
+  - url: 'https//taskfireapi.jamesellerbee.com'
 
 tags:
   - name: accounts
@@ -85,7 +85,7 @@ paths:
       tags:
         - tasks
       summary: Returns a list of tasks.
-      description:  Returns a list of tasks associated with the provided `accountId`.
+      description: Returns a list of tasks associated with the provided `accountId`.
       responses:
         200:
           description: List of Tasks json objects.
@@ -136,27 +136,45 @@ components:
       properties:
         title:
           type: string
+          description: The title of the task.
           example: Do the dishes
+          default: empty string
           required: true
         accountId:
           type: string
+          description: The account ID that this task belongs to.
           example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+          default: empty string
           required: true
         created:
           type: integer
+          description: The timestamp in milliseconds since EPOCH when this task was created.
+          default: 0
           example: 1707607550
         modified:
           type: integer
+          description: The timestamp in milliseconds since EPOCH when this task was last modified.
           example: 1707607551
           readOnly: true
+        due:
+          type: integer
+          description: The timestamp in milliseconds since EPOCH when this task is due. A value of -1 indicates no due date.
+          default: -1
+          example: 1707607551
+          required: false
         completed:
           type: boolean
+          description: Whether this task has been completed.
+          default: false
           example: false
         description:
           type: string
+          default: empty string
+          description: The optional description of this task
           example: "Optional description string"
         taskId:
           type: string
+          default: empty string
           example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
           readOnly: true
 

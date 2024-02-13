@@ -8,6 +8,7 @@ data class Task(
     val accountId: String,
     val created: Long,
     val modified: Long = 0,
+    val due: Long = -1,
     val completed: Boolean = false,
     val description: String = "",
     val taskId: String = ""
