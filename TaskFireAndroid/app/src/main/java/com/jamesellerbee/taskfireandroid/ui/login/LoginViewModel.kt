@@ -1,5 +1,6 @@
 package com.jamesellerbee.taskfireandroid.ui.login
 
+import com.jamesellerbee.taskfireandroid.dal.settings.AppSettings
 import com.jamesellerbee.taskfireandroid.dal.taskfire.Account
 import com.jamesellerbee.taskfireandroid.dal.taskfire.TaskFireApi
 import com.jamesellerbee.taskfireandroid.util.ResolutionStrategy
@@ -7,6 +8,7 @@ import com.jamesellerbee.taskfireandroid.util.ServiceLocator
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,11 +24,31 @@ class LoginViewModel(
         )
     )
 
+    private val appSettings by serviceLocator.resolveLazy<AppSettings>(
+        ResolutionStrategy.ByType(
+            type = AppSettings::class
+        )
+    )
+
+    private val _rememberMe =
+        MutableStateFlow(appSettings.get(AppSettings.rememberCredentials, "false").toBoolean())
+    val rememberMe = _rememberMe.asStateFlow()
+
     private val _message = MutableStateFlow<Pair<Boolean, String>?>(null)
     val message = _message.asStateFlow()
 
     private val _busy = MutableStateFlow(false)
     val busy = _busy.asStateFlow()
+
+    init {
+        MainScope().launch {
+            if (_rememberMe.value) {
+                val username = appSettings.get(AppSettings.savedUsername, "")
+                val password = appSettings.get(AppSettings.savedPassword, "")
+                onInteraction(LoginInteraction.Login(username, password))
+            }
+        }
+    }
 
     fun onInteraction(interaction: LoginInteraction) {
         when (interaction) {
@@ -51,6 +73,11 @@ class LoginViewModel(
                                 val authResponse = response.body()!!
                                 taskFireApi.setAccountId(authResponse.id)
                                 taskFireApi.setAuthToken(authResponse.token)
+
+                                if (_rememberMe.value) {
+                                    appSettings.set(AppSettings.savedUsername, interaction.username)
+                                    appSettings.set(AppSettings.savedPassword, interaction.password)
+                                }
                             } ?: run {
                                 _message.value = Pair(true, "Something unexpected happened.")
                             }
@@ -98,6 +125,11 @@ class LoginViewModel(
 
                     _busy.value = false
                 }
+            }
+
+            LoginInteraction.RememberMe -> {
+                _rememberMe.value = !_rememberMe.value
+                appSettings.set(AppSettings.rememberCredentials, _rememberMe.value.toString())
             }
         }
     }

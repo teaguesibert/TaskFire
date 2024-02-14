@@ -41,6 +41,12 @@ class TaskFireApi(baseUrl: String) {
         _accountId = accountId
     }
 
+    fun logout() {
+        _authenticated.value = false
+        _authToken = null
+        _authToken = null
+    }
+
     // TODO: either figure out how to only accept the server certificate or replace self-signed certificate.
     private fun getUnsafeOkHttpClient(): OkHttpClient {
         val trustManagers: Array<TrustManager> = arrayOf(

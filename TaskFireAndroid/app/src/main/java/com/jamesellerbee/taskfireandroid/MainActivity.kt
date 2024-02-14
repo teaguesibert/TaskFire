@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.jamesellerbee.taskfireandroid.bl.page.PageProvider
+import com.jamesellerbee.taskfireandroid.dal.settings.AppSettings
 import com.jamesellerbee.taskfireandroid.dal.taskfire.TaskFireApi
 import com.jamesellerbee.taskfireandroid.ui.App
 import com.jamesellerbee.taskfireandroid.ui.task.TaskPage
@@ -20,6 +21,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val serviceLocator = ServiceLocator.instance
+
+        val appSettings = AppSettings(this)
+
+        serviceLocator.register(
+            RegistrationStrategy.Singleton(
+                type = AppSettings::class,
+                service = appSettings
+            )
+        )
+
         val taskFireApi = TaskFireApi("https://taskfireapi.jamesellerbee.com")
 
         serviceLocator.register(
