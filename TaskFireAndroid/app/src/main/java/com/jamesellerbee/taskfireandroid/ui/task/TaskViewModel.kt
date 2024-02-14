@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TaskViewModel(serviceLocator: ServiceLocator) {
     private val taskFireApi by serviceLocator.resolveLazy<TaskFireApi>(
@@ -59,10 +60,19 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
                     refreshList()
                 }
             }
+
+            is TaskInteraction.Refresh -> {
+                CoroutineScope(Dispatchers.IO).launch(CoroutineExceptionHandler { _, throwable ->
+                    throwable.printStackTrace()
+                }) {
+                    refreshList()
+                    interaction.onRefreshComplete()
+                }
+            }
         }
     }
 
-    fun refreshList() {
+    private fun refreshList() {
         val response = taskFireApi.taskFireService.getTasks(
             authToken = taskFireApi.authToken,
             accountId = taskFireApi.accountId,

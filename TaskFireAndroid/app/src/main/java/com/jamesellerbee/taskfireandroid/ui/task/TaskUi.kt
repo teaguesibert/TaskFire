@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,15 +38,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,10 +60,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,7 +73,9 @@ import com.jamesellerbee.taskfireandroid.util.to12HourFormat
 import com.jamesellerbee.taskfireandroid.util.toDateString
 import com.jamesellerbee.taskfireandroid.util.toDateTimeString
 import com.jamesellerbee.taskfireandroid.util.toTimeString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -92,6 +100,18 @@ fun Task(serviceLocator: ServiceLocator) {
 
     var selectedTask by remember {
         mutableStateOf<Task?>(null)
+    }
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(null) {
+            viewModel.onInteraction(TaskInteraction.Refresh {
+                withContext(Dispatchers.Main) {
+                    pullToRefreshState.endRefresh()
+                }
+            })
+        }
     }
 
     BackHandler(enabled = selectedTask != null) {
@@ -131,36 +151,57 @@ fun Task(serviceLocator: ServiceLocator) {
                 }
             }
         ) { paddingValues ->
-            Surface(Modifier.padding(paddingValues)) {
-                Column {
-                    if (selectedTask == null) {
-                        val tasks = viewModel.tasks.collectAsState().value
-                        if (tasks.isEmpty()) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Text(text = "There are no tasks. Getting started by adding some.")
-                            }
-                        } else {
-                            LazyColumn(
-                                Modifier
-                                    .padding(top = 12.dp)
-                                    .weight(1f)
-                            ) {
-                                items(tasks) { task ->
-                                    Row(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)) {
-                                        TaskCard(task, viewModel) {
-                                            selectedTask = it
+            Surface(
+                Modifier
+                    .padding(paddingValues)
+                    .nestedScroll(pullToRefreshState.nestedScrollConnection)
+            ) {
+                Box {
+                    Column {
+                        if (selectedTask == null) {
+                            val tasks = viewModel.tasks.collectAsState().value
+                            if (tasks.isEmpty()) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    Text(text = "There are no tasks. Getting started by adding some.")
+                                }
+                            } else {
+                                LazyColumn(
+                                    Modifier
+                                        .padding(top = 12.dp)
+                                        .weight(1f)
+                                ) {
+                                    items(tasks) { task ->
+                                        Row(
+                                            Modifier.padding(
+                                                start = 8.dp,
+                                                end = 8.dp,
+                                                bottom = 8.dp
+                                            )
+                                        ) {
+                                            TaskCard(task, viewModel) {
+                                                selectedTask = it
+                                            }
                                         }
                                     }
                                 }
                             }
+                        } else {
+                            TaskDetails(selectedTask = selectedTask!!)
                         }
-                    } else {
-                        TaskDetails(selectedTask = selectedTask!!)
+
                     }
+
+                    PullToRefreshContainer(
+                        state = pullToRefreshState, modifier = Modifier.align(
+                            Alignment.TopCenter
+                        )
+                    )
                 }
             }
         }
@@ -283,7 +324,12 @@ fun TaskForm(onFormAction: (FormAction) -> Unit) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(selectableDates = object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+            return utcTimeMillis >= System.currentTimeMillis()
+        }
+    })
+
     val timePickerState = rememberTimePickerState()
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -323,7 +369,7 @@ fun TaskForm(onFormAction: (FormAction) -> Unit) {
             label = { Text("Due date (optional)") },
             trailingIcon = {
                 IconButton(onClick = {
-                    datePickerState.setSelection(null)
+                    datePickerState.selectedDateMillis = null
                 }) {
                     Icon(
                         imageVector = Icons.Default.Cancel,
@@ -349,10 +395,6 @@ fun TaskForm(onFormAction: (FormAction) -> Unit) {
 
             DatePicker(
                 state = datePickerState,
-                dateValidator = {
-                    it + 8.64e+7 >= Instant.now().truncatedTo(ChronoUnit.DAYS)
-                        .toEpochMilli()
-                }
             )
 
             Row(
