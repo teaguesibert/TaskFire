@@ -27,11 +27,11 @@ class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
     }
 
     override fun addTask(accountId: String, task: Task) {
-        transaction {
+        transaction(database) {
             TaskEntity.find { Tasks.taskId eq task.taskId }.firstOrNull()?.delete()
             TaskEntity.new {
                 title = task.title
-                this.accountId = task.accountId
+                this.accountId = accountId
                 created = task.created
                 modified = task.modified
                 completed = task.completed
@@ -42,7 +42,9 @@ class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
     }
 
     override fun removeTask(accountId: String, taskId: String) {
-        TaskEntity.find { (Tasks.taskId eq taskId) and (Tasks.accountId eq accountId) }
+        transaction(database) {
+            TaskEntity.find { (Tasks.taskId eq taskId) and (Tasks.accountId eq accountId) }.firstOrNull()?.delete()
+        }
     }
 
     object Tasks : IntIdTable() {

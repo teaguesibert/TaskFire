@@ -35,7 +35,7 @@ fun Routing.taskRoutes() {
             val accountId = call.parameters["accountId"]
 
             if (accountId == null) {
-                call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.BadRequest, "An account ID was not provided")
                 return@get
             }
 
