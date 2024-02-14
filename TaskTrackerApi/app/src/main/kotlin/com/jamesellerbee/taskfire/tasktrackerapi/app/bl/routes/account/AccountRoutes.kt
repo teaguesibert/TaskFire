@@ -19,6 +19,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
 import org.slf4j.LoggerFactory
+import org.mindrot.jbcrypt.BCrypt
 
 /**
  * Routes related to accounts.
@@ -63,7 +64,7 @@ fun Routing.accountRoutes() {
         val existingAccount =
             accountRepository.getAccounts().firstOrNull {
                 it.name == account.name
-                        && it.password == account.password
+                        && BCrypt.checkpw(account.password, it.password)
             }
 
         if (existingAccount != null) {
@@ -92,7 +93,12 @@ fun Routing.accountRoutes() {
             }) {
             val accountId = UUID.randomUUID().toString()
             logger.info("Created new account with ID $accountId")
-            val amendedAccount = newAccount.copy(id = accountId)
+
+            val amendedAccount = newAccount.copy(
+                id = accountId,
+                password = BCrypt.hashpw(newAccount.password, BCrypt.gensalt())
+            )
+
             accountRepository.addAccount(amendedAccount)
             call.respond(amendedAccount.copy(password = ""))
         } else {
