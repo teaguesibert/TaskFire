@@ -10,7 +10,7 @@ tags:
   - name: accounts
     description: Authentication and registration
   - name: tasks
-    description: CRUD operations for Tasks associated with an account..
+    description: CRUD operations for Tasks associated with an account.
 
 paths:
   /accounts:
@@ -46,7 +46,7 @@ paths:
     post:
       tags:
         - accounts
-      summary: Provides the account ID and JWT token.
+      summary: Provides the account ID and sets the JWT token in the response cookies.
       description: Provides a json object containing the account ID of the account used to authenticate and the JWT token to access protected routes.
       requestBody:
         content:
@@ -59,7 +59,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountIdJwtTokenPair'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
 
   /register:
     post:
@@ -86,6 +90,13 @@ paths:
         - tasks
       summary: Returns a list of tasks.
       description: Returns a list of tasks associated with the provided `accountId`.
+      parameters:
+        - name: accountId
+          description: The account ID to retrieve tasks for.
+          in: path
+          schema:
+            type: string
+            example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
       responses:
         200:
           description: List of Tasks json objects.
@@ -101,6 +112,13 @@ paths:
         - tasks
       summary: Create a new task or update existing task.
       description: Create a new task or update existing task if the `taskId` value matches an existing task.
+      parameters:
+        - name: accountId
+          description: The account ID to retrieve tasks for.
+          in: path
+          schema:
+            type: string
+            example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
       requestBody:
         content:
           application/json:
@@ -109,6 +127,33 @@ paths:
       responses:
         200:
           description: Task created successfully.
+
+  /tasks/{accountId}/{taskId}:
+    delete:
+      tags:
+        - tasks
+      summary: Delete a task
+      parameters:
+        - name: accountId
+          description: The account ID to verify claim.
+          in: path
+          schema:
+            type: string
+            example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+        - name: taskId
+          description: The task ID to delete
+          in: path
+          schema:
+            type: string
+            example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
+      responses:
+        200:
+          description: Task successfully deleted
+        400:
+          description: Account ID or Task ID was not provided in the url
+        401:
+          description: The account ID claim in the JWT does not match the account ID.
+
 
 components:
   schemas:
@@ -177,14 +222,3 @@ components:
           default: empty string
           example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
           readOnly: true
-
-    AccountIdJwtTokenPair:
-      type: object
-      properties:
-        token:
-          type: string
-          example: acbde...1234
-
-        id:
-          type: string
-          example: 42171f96-43d7-44a5-8a8b-52f713d7ccef
