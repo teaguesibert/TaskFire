@@ -72,7 +72,7 @@ class LoginViewModel(
                                 _message.value = Pair(false, "Sign in successful!")
                                 val authResponse = response.body()!!
                                 taskFireApi.setAccountId(authResponse.id)
-                                taskFireApi.setAuthToken(authResponse.token)
+                                taskFireApi.setCookie(response.headers().get("Set-Cookie") ?: "")
 
                                 if (_rememberMe.value) {
                                     appSettings.set(AppSettings.savedUsername, interaction.username)

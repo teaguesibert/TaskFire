@@ -10,7 +10,6 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
@@ -26,14 +25,14 @@ class TaskFireApi(baseUrl: String) {
     private val _authenticated = MutableStateFlow(false)
     val authenticated = _authenticated.asStateFlow()
 
-    private var _authToken: String? = null
-    val authToken get() = _authToken!!
+    private var _cookie: String? = null
+    val cookie get() = _cookie!!
 
     private var _accountId: String? = null
     val accountId get() = _accountId!!
 
-    fun setAuthToken(token: String) {
-        _authToken = "Bearer $token"
+    fun setCookie(cookie: String) {
+        _cookie = cookie
         _authenticated.value = true
     }
 
@@ -43,8 +42,7 @@ class TaskFireApi(baseUrl: String) {
 
     fun logout() {
         _authenticated.value = false
-        _authToken = null
-        _authToken = null
+        _cookie = null
     }
 
     // TODO: either figure out how to only accept the server certificate or replace self-signed certificate.

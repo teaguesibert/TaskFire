@@ -1,6 +1,5 @@
 package com.jamesellerbee.taskfireandroid.ui.task
 
-import com.google.gson.Gson
 import com.jamesellerbee.taskfireandroid.dal.taskfire.Task
 import com.jamesellerbee.taskfireandroid.dal.taskfire.TaskFireApi
 import com.jamesellerbee.taskfireandroid.util.ResolutionStrategy
@@ -11,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class TaskViewModel(serviceLocator: ServiceLocator) {
     private val taskFireApi by serviceLocator.resolveLazy<TaskFireApi>(
@@ -38,7 +36,7 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
                     throwable.printStackTrace()
                 }) {
                     taskFireApi.taskFireService.createTask(
-                        authToken = taskFireApi.authToken,
+                        cookie = taskFireApi.cookie,
                         accountId = taskFireApi.accountId,
                         task = interaction.task
                     ).execute()
@@ -52,7 +50,7 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
                     throwable.printStackTrace()
                 }) {
                     taskFireApi.taskFireService.deleteTask(
-                        authToken = taskFireApi.authToken,
+                        cookie = taskFireApi.cookie,
                         accountId = taskFireApi.accountId,
                         taskId = interaction.task.taskId
                     ).execute()
@@ -74,7 +72,7 @@ class TaskViewModel(serviceLocator: ServiceLocator) {
 
     private fun refreshList() {
         val response = taskFireApi.taskFireService.getTasks(
-            authToken = taskFireApi.authToken,
+            cookie = taskFireApi.cookie,
             accountId = taskFireApi.accountId,
         ).execute()
 

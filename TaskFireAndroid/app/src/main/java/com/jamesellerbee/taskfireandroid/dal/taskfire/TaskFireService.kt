@@ -27,7 +27,6 @@ data class Task(
 )
 
 data class AuthResponse(
-    val token: String,
     val id: String
 )
 
@@ -40,20 +39,20 @@ interface TaskFireService {
 
     @GET("/tasks/{accountId}")
     fun getTasks(
-        @Header("Authorization") authToken: String,
+        @Header("Cookie") cookie: String,
         @Path("accountId") accountId: String
     ): Call<List<Task>>
 
     @POST("/tasks/{accountId}")
     fun createTask(
-        @Header("Authorization") authToken: String,
+        @Header("Cookie") cookie: String,
         @Path("accountId") accountId: String,
         @Body task: Task
     ): Call<Unit>
 
     @DELETE("/tasks/{accountId}/{taskId}")
     fun deleteTask(
-        @Header("Authorization") authToken: String,
+        @Header("Cookie") cookie: String,
         @Path("accountId") accountId: String,
         @Path("taskId") taskId: String
     ): Call<Unit>
