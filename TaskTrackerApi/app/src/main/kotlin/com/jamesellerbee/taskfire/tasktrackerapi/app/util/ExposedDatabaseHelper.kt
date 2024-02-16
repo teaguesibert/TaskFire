@@ -3,6 +3,7 @@ package com.jamesellerbee.taskfire.tasktrackerapi.app.util
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.DatabaseType
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import java.io.File
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -44,6 +45,7 @@ object ExposedDatabaseHelper {
                         addLogger(StdOutSqlLogger)
 
                         SchemaUtils.create(ExposedAccountRepository.Accounts)
+                        SchemaUtils.create(ExposedTaskRepository.Tasks)
                     }
                 }
             }

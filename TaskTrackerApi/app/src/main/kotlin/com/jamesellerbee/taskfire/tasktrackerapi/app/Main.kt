@@ -16,6 +16,7 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.auth.parseAuthorizationHeader
 import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
 import io.ktor.serialization.kotlinx.json.json
@@ -138,6 +139,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    val logger = LoggerFactory.getLogger("main")
     val serviceLocator = ServiceLocator.instance
 
     val applicationProperties =
@@ -169,6 +171,17 @@ fun Application.module() {
                     .withAudience("https://0.0.0.0")
                     .build()
             )
+
+            authHeader { call ->
+                val cookieValue = call.request.cookies["Authorization"] ?: return@authHeader null
+
+                try {
+                    parseAuthorizationHeader("Bearer $cookieValue")
+                } catch (ex: Exception) {
+                    logger.error("Error:", ex)
+                    null
+                }
+            }
 
             validate { credential ->
                 if (credential.payload.getClaim("accountId").asString() != "") {

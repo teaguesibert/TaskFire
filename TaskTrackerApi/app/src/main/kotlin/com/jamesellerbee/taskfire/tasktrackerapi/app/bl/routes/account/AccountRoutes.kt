@@ -7,6 +7,7 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationP
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
+import io.ktor.http.Cookie
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -18,8 +19,8 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
-import org.slf4j.LoggerFactory
 import org.mindrot.jbcrypt.BCrypt
+import org.slf4j.LoggerFactory
 
 /**
  * Routes related to accounts.
@@ -75,7 +76,8 @@ fun Routing.accountRoutes() {
                 .withClaim("accountId", existingAccount.id)
                 .sign(Algorithm.HMAC256(applicationProperties["secret"] as String))
 
-            call.respond(hashMapOf("token" to token, "id" to existingAccount.id))
+            call.response.cookies.append(Cookie("Authorization", token, path = "/", httpOnly = true))
+            call.respond(hashMapOf("id" to existingAccount.id))
         } else {
             call.respond(HttpStatusCode.Unauthorized)
         }
