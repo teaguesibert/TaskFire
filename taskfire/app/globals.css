@@ -31,3 +31,7 @@ body {
     text-wrap: balance;
   }
 }
+
+.swipeable-list-item__content {
+    display: block;
+}

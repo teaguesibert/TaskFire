@@ -57,7 +57,7 @@ const Dashboard:React.FC = () => {
         const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
             setNewTaskDescription(e.target.value);
         };
-        
+
         const handleToggleCompleted = async (taskId: string, completed: boolean) => {
             
             const taskToToggle = tasks.find(task => task.taskId === taskId);
@@ -158,7 +158,7 @@ const Dashboard:React.FC = () => {
                     alt="TaskFire Logo"
                     
                     />
-                    <h1 className="text-2xl mb-4">Tasks</h1>
+                    <h1 className="text-2xl">Tasks</h1>
                     <Clock/>
                 </div>
                 <div className='overflow-y-auto mb-2'>

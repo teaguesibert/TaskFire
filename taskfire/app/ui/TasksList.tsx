@@ -1,4 +1,7 @@
 import React from 'react';
+import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions, LeadingActions } from 'react-swipeable-list';
+import 'react-swipeable-list/dist/styles.css'; // default styles
+import Image from 'next/image';
 
 interface Task {
     title: string;
@@ -36,21 +39,60 @@ const formatDate = (createdEpochMillis: number) => {
     }
   };
 
-
   const TasksList: React.FC<TaskListProps> = ({ tasks, onToggleCompleted, onDeleteTask }) => {
+    
+    const trailingActions = (taskId: string) => (
+        <TrailingActions>
+            <SwipeAction
+                onClick={() => onDeleteTask(taskId)}
+                destructive={true}
+            >
+                 <Image
+                    src="/delete_sweep.svg"
+                    width={20}
+                    height={20}
+                    alt="TaskFire Logo"
+                    />
+            </SwipeAction>
+        </TrailingActions>
+    );
+
+    const leadingActions = (taskId: string, completed: boolean) => (
+        <LeadingActions>
+            <SwipeAction
+                onClick={() => onToggleCompleted(taskId, !completed)}
+            >
+                {completed ?  <Image
+                    src="/task_alt.svg"
+                    width={20}
+                    height={20}
+                    alt="TaskFire Logo"
+                    className='mb-4 p-3'
+                    /> : 
+                    <Image
+                    src="/radio_button_unchecked.svg"
+                    width={20}
+                    height={20}
+                    alt="TaskFire Logo"
+                    className='mb-4 p-3'
+                    />}
+            </SwipeAction>
+        </LeadingActions>
+    );
+
     return (
-        <>
+        <SwipeableList>
             {tasks.map((task) => (
-                <div key={task.taskId} className="bg-gray-800 p-2 rounded mb-2 ">
+                <SwipeableListItem
+                    key={task.taskId}
+                    leadingActions={leadingActions(task.taskId, task.completed)}
+                    trailingActions={trailingActions(task.taskId)}
+                    className="bg-gray-800 p-2 rounded mb-2 "
+                >
+                    <div key={task.taskId} className="bg-gray-800 p-2 rounded mb-2 ">
                     <div className='flex justify-between'>
                         <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={task.completed}
-                                onChange={(e) => onToggleCompleted(task.taskId, e.target.checked)}
-                                className="form-checkbox h-5 w-5 text-green-600 mr-2"
-                            />
-                            <h3 className={`text-lg font-bold ${task.completed ? 'line-through' : ''}`}>
+                            <h3 className={`text-lg font-semibold ${task.completed ? 'line-through' : ''}`}>
                                 {task.title}
                             </h3>
                         </div>
@@ -59,17 +101,13 @@ const formatDate = (createdEpochMillis: number) => {
                         </span>
                     </div>
                     
-                    <p>{task.description}</p>
-                    <button
-                        onClick={() => onDeleteTask(task.taskId)}
-                        className="text-red-500 hover:text-red-700"
-                    >
-                        Delete
-                    </button>
+                    <p className={`${task.completed ? 'line-through' : ''}`}>{task.description}</p>
                 </div>
+                </SwipeableListItem>
             ))}
-        </>
+        </SwipeableList>
     );
 };
 
 export default TasksList;
+
