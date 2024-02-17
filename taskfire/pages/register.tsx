@@ -25,7 +25,7 @@ const RegisterPage = () => {
     };
   
     try {
-      const response = await fetch('http://localhost:8080/register', {
+      const response = await fetch('https://taskfireapi.jamesellerbee.com/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const RegisterPage = () => {
           <button className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
             Register
           </button>
-          <a className="inline-block align-baseline font-bold text-sm text-amber-600 hover:text-amber-700 " href="#" onClick={() => router.push('/login')}>
+          <a className="inline-block align-baseline font-bold text-sm text-amber-600 hover:text-amber-700 " href="#" onClick={() => router.push('/')}>
             Already have an account?
           </a>
         </div>

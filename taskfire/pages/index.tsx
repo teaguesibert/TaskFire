@@ -21,10 +21,12 @@ const LoginPage = () => {
 
     const name = username;
     try {
-      const response = await fetch('http://localhost:8080/auth', {
+      const response = await fetch('https://taskfireapi.jamesellerbee.com/auth', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          "Access-Control-Allow-Origin": "https://taskfireapi.jamesellerbee.com/",
         },
         body: JSON.stringify({ name, password }),
       });
@@ -32,7 +34,6 @@ const LoginPage = () => {
       if (response.ok) {
         const data = await response.json();
         //console.log(data)
-        localStorage.setItem('authToken', (data.token));
         localStorage.setItem('accountUid', (data.id));
         router.push('/dashboard')
         // console.log(response.json())
