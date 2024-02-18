@@ -155,8 +155,7 @@ fun Routing.accountRoutes() {
                     path = "/",
                     httpOnly = false,
                     secure = true,
-                    domain = applicationProperties["domain"] as String,
-                    extensions = mapOf("SameSite" to "None", "Partitioned" to "")
+                    domain = applicationProperties["domain"] as String
                 )
             )
             call.respond(hashMapOf("id" to existingAccount.id))

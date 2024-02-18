@@ -1,6 +1,8 @@
+import Constants from "../../Constants";
+
 export default function getTasks(setTasks) {
     fetch(
-        "https://localhost:8443/tasks",
+        `https://${Constants.domain}/tasks`,
         {
             headers: {
                 "Access-Control-Allow-Origin": "https://localhost:8443"
