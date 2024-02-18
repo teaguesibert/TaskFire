@@ -140,20 +140,39 @@ fun main(args: Array<String>) {
     }
 
     logger.info("Setting up admin")
-    if (accountRepository.getAccounts().none {
-            it.name == applicationProperties["adminUsername"] as String
-                    && BCrypt.checkpw(applicationProperties["adminPassword"] as String, it.password)
-        }) {
+    val existingAdminAccount = accountRepository.getAccounts().firstOrNull() {
+        it.name == applicationProperties["adminUsername"] as String
+    }
+
+    val updatedAdminAccount = if (existingAdminAccount != null
+        && !BCrypt.checkpw(
+            applicationProperties["adminPassword"] as String,
+            existingAdminAccount.password
+        )
+    ) {
+        logger.info("Updating admin account password")
+        Account(
+            name = applicationProperties["adminUsername"] as String,
+            password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            id = existingAdminAccount.id,
+            created = existingAdminAccount.created
+        )
+    } else if (existingAdminAccount == null) {
         logger.info("Creating admin account")
-        val newAdminAccount = Account(
+        Account(
             name = applicationProperties["adminUsername"] as String,
             password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
             id = UUID.randomUUID().toString(),
             created = System.currentTimeMillis()
         )
+    } else {
+        logger.info("Admin account already up to date")
+        existingAdminAccount
+    }
 
-        accountRepository.addAccount(newAdminAccount)
-        adminRepository.addAdmin(newAdminAccount.id)
+    if (updatedAdminAccount != existingAdminAccount) {
+        accountRepository.addAccount(updatedAdminAccount)
+        adminRepository.addAdmin(updatedAdminAccount.id)
     }
 
     val environment = applicationEngineEnvironment {
@@ -242,6 +261,7 @@ fun Application.module() {
         }
 
         applicationProperties["adminPortalReactAppPath"]?.let {
+            logger.debug("Serving admin portal from path {}", it)
             singlePageApplication {
                 applicationRoute = "/admin-portal"
                 react(it as String)
