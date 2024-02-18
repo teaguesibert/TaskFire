@@ -4,12 +4,16 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account.accountRoutes
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task.taskRoutes
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.InMemoryTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.RegistrationStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
@@ -21,7 +25,6 @@ import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
@@ -29,19 +32,21 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
+import io.ktor.server.http.content.react
+import io.ktor.server.http.content.singlePageApplication
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import java.io.File
 import java.security.KeyStore
+import java.util.UUID
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
+import org.mindrot.jbcrypt.BCrypt
 import org.slf4j.LoggerFactory
 
 fun main(args: Array<String>) {
@@ -76,17 +81,23 @@ fun main(args: Array<String>) {
         )
     )
 
+    // Create repositories
     val accountRepository: AccountRepository = if (inMemory) {
         InMemoryAccountRepository()
     } else {
         ExposedAccountRepository(serviceLocator)
     }
 
-
     val taskRepository: TaskRepository = if (inMemory) {
         InMemoryTaskRepository()
     } else {
         ExposedTaskRepository(serviceLocator)
+    }
+
+    val adminRepository: AdminRepository = if (inMemory) {
+        InMemoryAdminRepository()
+    } else {
+        ExposedAdminRepository(serviceLocator)
     }
 
     serviceLocator.register(
@@ -100,6 +111,13 @@ fun main(args: Array<String>) {
         RegistrationStrategy.Singleton(
             type = TaskRepository::class,
             service = taskRepository
+        )
+    )
+
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = AdminRepository::class,
+            service = adminRepository
         )
     )
 
@@ -119,6 +137,22 @@ fun main(args: Array<String>) {
         keyStore
     } else {
         KeyStore.getInstance(keyStoreFile, (applicationProperties["keystorePassword"] as String).toCharArray())
+    }
+
+    logger.info("Setting up admin")
+    if (accountRepository.getAccounts().none {
+            it.name == applicationProperties["adminUsername"] as String
+                    && BCrypt.checkpw(applicationProperties["adminPassword"] as String, it.password)
+        }) {
+        logger.info("Creating admin account")
+        val newAdminAccount = Account(
+            name = applicationProperties["adminUsername"] as String,
+            password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            id = UUID.randomUUID().toString()
+        )
+
+        accountRepository.addAccount(newAdminAccount)
+        adminRepository.addAdmin(newAdminAccount.id)
     }
 
     val environment = applicationEngineEnvironment {
@@ -151,7 +185,9 @@ fun Application.module() {
         json()
     }
 
-    install(CallLogging)
+    install(CallLogging) {
+        this.logger = LoggerFactory.getLogger("taskfireapi")
+    }
 
     install(CORS) {
         anyHost()
@@ -200,8 +236,9 @@ fun Application.module() {
     routing {
         openAPI(path = "/openapi", swaggerFile = "./openAPI/documentation.yaml")
 
-        get(path = "/") {
-            call.respondText("Hello, world!")
+        singlePageApplication {
+            applicationRoute = "/admin-portal"
+            react("admin-portal/build/")
         }
 
         accountRoutes()

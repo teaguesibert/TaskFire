@@ -1,6 +1,7 @@
 package com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task
 
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Task
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
@@ -28,7 +29,22 @@ fun Routing.taskRoutes() {
         )
     )!!
 
+    val adminRepository = serviceLocator.resolve<AdminRepository>(
+        ResolutionStrategy.ByType(type = AdminRepository::class)
+    )!!
+
     authenticate("auth-jwt") {
+        get("/tasks") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val accountIdClaim = principal.getClaim("accountId", String::class)
+
+            if(!adminRepository.isAdmin(accountIdClaim ?: "")) {
+                call.respond(HttpStatusCode.Unauthorized)
+            }
+
+            call.respond(taskRepository.getTasks())
+        }
+
         get("/tasks/{accountId}") {
             val principal = call.principal<JWTPrincipal>()!!
             val accountIdClaim = principal.getClaim("accountId", String::class)

@@ -48,7 +48,7 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
     override fun getAccount(accountId: String): Account? {
         var account: Account? = null
 
-        transaction {
+        transaction(database) {
             AccountEntity.find { Accounts.accountId eq accountId }.firstOrNull()?.let { accountEntity ->
                 account = accountEntity.toAccount()
             }

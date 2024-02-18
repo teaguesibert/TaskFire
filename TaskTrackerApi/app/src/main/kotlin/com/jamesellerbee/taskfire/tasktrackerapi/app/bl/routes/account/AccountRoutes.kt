@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ServiceLocator
 import io.ktor.http.Cookie
@@ -34,6 +35,10 @@ fun Routing.accountRoutes() {
         ResolutionStrategy.ByType(type = AccountRepository::class)
     )!!
 
+    val adminRepository = serviceLocator.resolve<AdminRepository>(
+        ResolutionStrategy.ByType(type = AdminRepository::class)
+    )!!
+
     val applicationProperties = serviceLocator.resolve<ApplicationProperties>(
         ResolutionStrategy.ByType(type = ApplicationProperties::class)
     )!!
@@ -51,7 +56,7 @@ fun Routing.accountRoutes() {
             } else {
                 accountRepository.getAccounts()
                     .filter { it.name == call.request.queryParameters["name"] }
-                    .filter { it.id == accountIdClaim }
+                    .filter { it.id == accountIdClaim || adminRepository.isAdmin(accountIdClaim ?: "") }
                     .map { it.copy(password = "") }
             }
 
@@ -84,7 +89,7 @@ fun Routing.accountRoutes() {
                     path = "/",
                     httpOnly = false,
                     secure = true,
-                    domain = "taskfireapi.jamesellerbee.com",
+                    domain = applicationProperties["domain"] as String,
                     extensions = mapOf("SameSite" to "None", "Partitioned" to "")
                 )
             )
