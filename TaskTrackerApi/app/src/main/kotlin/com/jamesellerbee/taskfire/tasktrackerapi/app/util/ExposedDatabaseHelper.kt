@@ -64,6 +64,7 @@ object ExposedDatabaseHelper {
 object AccountsSqliteMigrationHelper {
     fun migrate(transaction: Transaction) {
         val logger = LoggerFactory.getLogger(this::class.java)
+        logger.info("Migrating Accounts table")
 
         val existingColumns = transaction.exec("PRAGMA table_info(Accounts);") {
             val columns = mutableListOf<String>()
@@ -75,7 +76,7 @@ object AccountsSqliteMigrationHelper {
         } ?: emptyList()
 
         if (existingColumns.none { it == "created" }) {
-            transaction.exec("ALTER TABLE Accounts ADD COLUMN created BIGINT;")
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN created BIGINT DEFAULT 0;")
         } else {
             logger.debug("Accounts table already has column created. Nothing to do.")
         }
