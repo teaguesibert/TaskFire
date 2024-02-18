@@ -148,7 +148,8 @@ fun main(args: Array<String>) {
         val newAdminAccount = Account(
             name = applicationProperties["adminUsername"] as String,
             password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
-            id = UUID.randomUUID().toString()
+            id = UUID.randomUUID().toString(),
+            created = System.currentTimeMillis()
         )
 
         accountRepository.addAccount(newAdminAccount)
@@ -234,7 +235,9 @@ fun Application.module() {
     }
 
     routing {
-        openAPI(path = "/openapi", swaggerFile = "./openAPI/documentation.yaml")
+        applicationProperties["openApiPath"]?.let {
+            openAPI(path = "/openapi", swaggerFile = it as String)
+        }
 
         singlePageApplication {
             applicationRoute = "/admin-portal"

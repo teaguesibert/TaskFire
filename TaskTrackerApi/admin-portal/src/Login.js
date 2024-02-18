@@ -1,29 +1,7 @@
 import React, {useState} from 'react';
 import {Button, TextField} from "@mui/material";
 import Grid2 from "@mui/material/Unstable_Grid2";
-
-function login(username, password, setAuthed, setAccountId) {
-    fetch("https://localhost:8443/auth",
-        {
-            headers: {
-                "Access-Control-Allow-Origin": "https://localhost:8443",
-                "Content-Type": "application/json"
-            },
-            method: "POST",
-            credentials: "include",
-            body: JSON.stringify({
-                name: username,
-                password: password
-            })
-        }
-    ).then(async response => {
-        let body = await response.json()
-        setAccountId(body.id)
-        setAuthed(true)
-    }).catch((error) => {
-        console.error(error)
-    })
-}
+import login from "./requests/account/login";
 
 export default function Login(props) {
     let [username, setUsername] = useState("")
@@ -44,7 +22,10 @@ export default function Login(props) {
             </Grid2>
 
             <Grid2 display="flex" justifyContent="center" alignItems="center" xs={12}>
-                <Button onClick={() => login(username, password, setAuthed, setAccountId)}
+                <Button onClick={() => login(username, password, body => {
+                    setAccountId(body.id)
+                    setAuthed(true)
+                })}
                         variant="contained">Login</Button>
             </Grid2>
         </Grid2>

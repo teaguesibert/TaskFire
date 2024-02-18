@@ -17,6 +17,7 @@ import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.util.UUID
@@ -51,7 +52,7 @@ fun Routing.accountRoutes() {
 
             val message = if (call.request.queryParameters["name"] == null) {
                 accountRepository.getAccounts()
-                    .filter { it.id == accountIdClaim }
+                    .filter { it.id == accountIdClaim || adminRepository.isAdmin(accountIdClaim ?: "") }
                     .map { it.copy(password = "") }
             } else {
                 accountRepository.getAccounts()
@@ -61,6 +62,71 @@ fun Routing.accountRoutes() {
             }
 
             call.respond(message)
+        }
+
+        /**
+         * Modifies the account. Use this route to update the username or password of an account.
+         */
+        post(path = "/accounts/{accountId}") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val accountIdClaim = principal.getClaim("accountId", String::class)
+            val accountId = call.parameters["accountId"]
+            val modifiedAccount = call.receive<Account>()
+
+            if (modifiedAccount.password.isBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Password cannot be empty")
+                return@post
+            }
+
+            if (accountId == null) {
+                call.respond(HttpStatusCode.BadRequest, "An account ID was not provided in path")
+                return@post
+            }
+
+            if (accountId != accountIdClaim && !adminRepository.isAdmin(accountIdClaim ?: "")) {
+                call.respond(HttpStatusCode.Unauthorized, "Account Id claim does not permit this action")
+                return@post
+            }
+
+            val account = accountRepository.getAccount(accountId)
+            if (account == null) {
+                call.respond(HttpStatusCode.NotFound, "No account exists with that ID.")
+                return@post
+            }
+
+            accountRepository.addAccount(
+                account.copy(
+                    name = modifiedAccount.name,
+                    password = BCrypt.hashpw(modifiedAccount.password, BCrypt.gensalt())
+                )
+            )
+
+            call.respond(HttpStatusCode.OK)
+        }
+
+        delete(path = "/accounts/{accountId}") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val accountIdClaim = principal.getClaim("accountId", String::class)
+            val accountId = call.parameters["accountId"]
+
+            if (accountId == null) {
+                call.respond(HttpStatusCode.BadRequest, "An account ID was not provided in path")
+                return@delete
+            }
+
+            if (accountId != accountIdClaim && !adminRepository.isAdmin(accountIdClaim ?: "")) {
+                call.respond(HttpStatusCode.Unauthorized, "Account Id claim does not permit this action")
+                return@delete
+            }
+
+            val account = accountRepository.getAccount(accountId)
+            if (account == null) {
+                call.respond(HttpStatusCode.NotFound, "No account exists with that ID.")
+                return@delete
+            }
+
+            accountRepository.deleteAccount(accountId)
+            call.respond(HttpStatusCode.OK)
         }
     }
 
@@ -103,7 +169,7 @@ fun Routing.accountRoutes() {
         val newAccount = call.receive<Account>()
 
         if (newAccount.password.isBlank()) {
-            call.respond(HttpStatusCode.NotAcceptable, "Password cannot be blank")
+            call.respond(HttpStatusCode.BadRequest, "Password cannot be blank")
         }
 
         if (accountRepository.getAccounts().none { account ->
@@ -114,7 +180,8 @@ fun Routing.accountRoutes() {
 
             val amendedAccount = newAccount.copy(
                 id = accountId,
-                password = BCrypt.hashpw(newAccount.password, BCrypt.gensalt())
+                password = BCrypt.hashpw(newAccount.password, BCrypt.gensalt()),
+                created = System.currentTimeMillis()
             )
 
             accountRepository.addAccount(amendedAccount)

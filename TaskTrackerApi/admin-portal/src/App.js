@@ -23,7 +23,7 @@ function App() {
             <div>
                 {
                     !authed ? (<Login setAuthed={setAuthed} setAccountId={setAccountId}/>) : (
-                        <Dashboard accountId={accountId}/>
+                        <Dashboard/>
                     )
                 }
             </div>

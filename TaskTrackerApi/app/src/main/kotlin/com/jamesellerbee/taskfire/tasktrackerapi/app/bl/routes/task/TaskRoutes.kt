@@ -51,13 +51,13 @@ fun Routing.taskRoutes() {
             val accountId = call.parameters["accountId"]
 
             if (accountId == null) {
-                call.respond(HttpStatusCode.BadRequest, "An account ID was not provided")
+                call.respond(HttpStatusCode.BadRequest, "An account ID was not provided in path")
                 return@get
             }
 
             if (accountId != accountIdClaim) {
                 logger.warn("Account id was $accountId but account id claim was $accountIdClaim")
-                call.respond(HttpStatusCode.Unauthorized, "Account ID claim does not match provided account ID")
+                call.respond(HttpStatusCode.Unauthorized, "Account Id claim does not permit this action")
                 return@get
             }
 

@@ -7,4 +7,5 @@ data class Account(
     val name: String,
     val password: String = "",
     val id: String = "",
+    val created: Long = 0
 )
