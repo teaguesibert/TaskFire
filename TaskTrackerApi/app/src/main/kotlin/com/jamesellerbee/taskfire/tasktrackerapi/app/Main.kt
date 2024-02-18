@@ -237,11 +237,17 @@ fun Application.module() {
     routing {
         applicationProperties["openApiPath"]?.let {
             openAPI(path = "/openapi", swaggerFile = it as String)
+        } ?: run {
+            logger.warn("openApiPath property not set")
         }
 
-        singlePageApplication {
-            applicationRoute = "/admin-portal"
-            react("admin-portal/build/")
+        applicationProperties["adminPortalReactAppPath"]?.let {
+            singlePageApplication {
+                applicationRoute = "/admin-portal"
+                react(it as String)
+            }
+        } ?: run {
+            logger.warn("adminPortalReactAppPath property not set")
         }
 
         accountRoutes()
