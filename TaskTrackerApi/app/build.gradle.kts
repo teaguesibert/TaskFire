@@ -40,6 +40,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.47.0")
 
     implementation("org.xerial:sqlite-jdbc:3.44.1.0")
+
+    implementation("org.apache.commons:commons-email:1.5")
+    implementation("commons-validator:commons-validator:1.8.0")
+
 }
 
 kotlin {

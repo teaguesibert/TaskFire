@@ -78,7 +78,19 @@ object AccountsSqliteMigrationHelper {
         if (existingColumns.none { it == "created" }) {
             transaction.exec("ALTER TABLE Accounts ADD COLUMN created BIGINT DEFAULT 0;")
         } else {
-            logger.debug("Accounts table already has column created. Nothing to do.")
+            logger.debug("Accounts table already has column \"created\". Nothing to do.")
+        }
+
+        if (existingColumns.none { it == "email" }) {
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN email varchar(256) DEFAULT \"\";")
+        } else {
+            logger.debug("Accounts tablet already has column \"email\". Nothing to do.")
+        }
+
+        if (existingColumns.none { it == "verified" }) {
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN verified INTEGER DEFAULT 0;")
+        } else {
+            logger.debug("Accounts table already has column \"verified\". Nothing to do.")
         }
     }
 }

@@ -12,6 +12,7 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMe
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.InMemoryTaskRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.stmp.GoogleSmtpEmailSender
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
@@ -63,6 +64,12 @@ fun main(args: Array<String>) {
         type = ArgType.Boolean,
         fullName = "inMemory",
         description = "Use in memory repositories",
+    ).default(false)
+
+    val noEmail by parser.option(
+        type = ArgType.Boolean,
+        fullName = "noEmail",
+        description = "Disable email functionality"
     ).default(false)
 
     parser.parse(args)
@@ -154,16 +161,20 @@ fun main(args: Array<String>) {
         Account(
             name = applicationProperties["adminUsername"] as String,
             password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            email = "",
             id = existingAdminAccount.id,
-            created = existingAdminAccount.created
+            created = existingAdminAccount.created,
+            verified = true
         )
     } else if (existingAdminAccount == null) {
         logger.info("Creating admin account")
         Account(
             name = applicationProperties["adminUsername"] as String,
             password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            email = "",
             id = UUID.randomUUID().toString(),
-            created = System.currentTimeMillis()
+            created = System.currentTimeMillis(),
+            verified = true
         )
     } else {
         logger.info("Admin account already up to date")
@@ -173,6 +184,18 @@ fun main(args: Array<String>) {
     if (updatedAdminAccount != existingAdminAccount) {
         accountRepository.addAccount(updatedAdminAccount)
         adminRepository.addAdmin(updatedAdminAccount.id)
+    }
+
+    if (!noEmail) {
+        logger.info("setting up email service")
+
+        val emailSender = GoogleSmtpEmailSender(serviceLocator)
+        serviceLocator.register(
+            RegistrationStrategy.Singleton(
+                type = GoogleSmtpEmailSender::class,
+                service = emailSender
+            )
+        )
     }
 
     val environment = applicationEngineEnvironment {

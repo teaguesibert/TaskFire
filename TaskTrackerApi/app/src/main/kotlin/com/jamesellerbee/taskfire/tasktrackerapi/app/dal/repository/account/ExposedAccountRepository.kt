@@ -20,9 +20,14 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
             AccountEntity.find { Accounts.name eq newAccount.name }.firstOrNull()?.delete()
             AccountEntity.new {
                 name = newAccount.name
+                email = newAccount.email
                 password = newAccount.password
                 accountId = newAccount.id
                 created = newAccount.created
+                verified = when (newAccount.verified) {
+                    true -> 1
+                    false -> 0
+                }
             }
         }
     }
@@ -58,26 +63,32 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
     }
 
     object Accounts : IntIdTable() {
+        val email = varchar("email", 256)
         val name = varchar("name", 50)
         val password = varchar("password", 256)
         val accountId = varchar("accountId", 50)
         val created = long("created")
+        val verified = integer("verified")
     }
 
     class AccountEntity(id: EntityID<Int>) : IntEntity(id) {
         companion object : IntEntityClass<AccountEntity>(Accounts)
 
+        var email by Accounts.email
         var name by Accounts.name
         var password by Accounts.password
         var accountId by Accounts.accountId
         var created by Accounts.created
+        var verified by Accounts.verified
 
         fun toAccount(): Account {
             return Account(
                 name = name,
+                email = email,
                 password = password,
                 id = accountId,
-                created = created
+                created = created,
+                verified = verified == 1
             )
         }
     }
