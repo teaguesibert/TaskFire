@@ -4,12 +4,17 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.account.accountRoutes
 import com.jamesellerbee.taskfire.tasktrackerapi.app.bl.routes.task.taskRoutes
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.entites.Account
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.InMemoryAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.InMemoryTaskRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.stmp.GoogleSmtpEmailSender
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.AdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.RegistrationStrategy
 import com.jamesellerbee.taskfire.tasktrackerapi.app.util.ResolutionStrategy
@@ -21,7 +26,6 @@ import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
@@ -29,19 +33,21 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
+import io.ktor.server.http.content.react
+import io.ktor.server.http.content.singlePageApplication
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import java.io.File
 import java.security.KeyStore
+import java.util.UUID
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
+import org.mindrot.jbcrypt.BCrypt
 import org.slf4j.LoggerFactory
 
 fun main(args: Array<String>) {
@@ -60,6 +66,12 @@ fun main(args: Array<String>) {
         description = "Use in memory repositories",
     ).default(false)
 
+    val noEmail by parser.option(
+        type = ArgType.Boolean,
+        fullName = "noEmail",
+        description = "Disable email functionality"
+    ).default(false)
+
     parser.parse(args)
 
     val logger = LoggerFactory.getLogger("main")
@@ -76,17 +88,23 @@ fun main(args: Array<String>) {
         )
     )
 
+    // Create repositories
     val accountRepository: AccountRepository = if (inMemory) {
         InMemoryAccountRepository()
     } else {
         ExposedAccountRepository(serviceLocator)
     }
 
-
     val taskRepository: TaskRepository = if (inMemory) {
         InMemoryTaskRepository()
     } else {
         ExposedTaskRepository(serviceLocator)
+    }
+
+    val adminRepository: AdminRepository = if (inMemory) {
+        InMemoryAdminRepository()
+    } else {
+        ExposedAdminRepository(serviceLocator)
     }
 
     serviceLocator.register(
@@ -103,13 +121,22 @@ fun main(args: Array<String>) {
         )
     )
 
+    serviceLocator.register(
+        RegistrationStrategy.Singleton(
+            type = AdminRepository::class,
+            service = adminRepository
+        )
+    )
+
+    logger.info("Setting up SSL cert")
+
     // Set up keystore if it does not exist
     val keyStoreFile = File("keystore.jks")
     val keyStore = if (!keyStoreFile.exists()) {
         val keyStore = buildKeyStore {
             certificate("taskfireapi") {
                 password = applicationProperties["certificatePassword"] as String
-                domains = listOf("127.0.0.1", "0.0.0.0", "localhost")
+                domains = listOf("taskfireapi.jamesellerbee.com")
             }
         }
 
@@ -117,6 +144,58 @@ fun main(args: Array<String>) {
         keyStore
     } else {
         KeyStore.getInstance(keyStoreFile, (applicationProperties["keystorePassword"] as String).toCharArray())
+    }
+
+    logger.info("Setting up admin")
+    val existingAdminAccount = accountRepository.getAccounts().firstOrNull() {
+        it.name == applicationProperties["adminUsername"] as String
+    }
+
+    val updatedAdminAccount = if (existingAdminAccount != null
+        && !BCrypt.checkpw(
+            applicationProperties["adminPassword"] as String,
+            existingAdminAccount.password
+        )
+    ) {
+        logger.info("Updating admin account password")
+        Account(
+            name = applicationProperties["adminUsername"] as String,
+            password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            email = "",
+            id = existingAdminAccount.id,
+            created = existingAdminAccount.created,
+            verified = true
+        )
+    } else if (existingAdminAccount == null) {
+        logger.info("Creating admin account")
+        Account(
+            name = applicationProperties["adminUsername"] as String,
+            password = BCrypt.hashpw(applicationProperties["adminPassword"] as String, BCrypt.gensalt()),
+            email = "",
+            id = UUID.randomUUID().toString(),
+            created = System.currentTimeMillis(),
+            verified = true
+        )
+    } else {
+        logger.info("Admin account already up to date")
+        existingAdminAccount
+    }
+
+    if (updatedAdminAccount != existingAdminAccount) {
+        accountRepository.addAccount(updatedAdminAccount)
+        adminRepository.addAdmin(updatedAdminAccount.id)
+    }
+
+    if (!noEmail) {
+        logger.info("setting up email service")
+
+        val emailSender = GoogleSmtpEmailSender(serviceLocator)
+        serviceLocator.register(
+            RegistrationStrategy.Singleton(
+                type = GoogleSmtpEmailSender::class,
+                service = emailSender
+            )
+        )
     }
 
     val environment = applicationEngineEnvironment {
@@ -149,7 +228,9 @@ fun Application.module() {
         json()
     }
 
-    install(CallLogging)
+    install(CallLogging) {
+        this.logger = LoggerFactory.getLogger("taskfireapi")
+    }
 
     install(CORS) {
         anyHost()
@@ -196,10 +277,20 @@ fun Application.module() {
     }
 
     routing {
-        openAPI(path = "/openapi", swaggerFile = "./openAPI/documentation.yaml")
+        applicationProperties["openApiPath"]?.let {
+            openAPI(path = "/openapi", swaggerFile = it as String)
+        } ?: run {
+            logger.warn("openApiPath property not set")
+        }
 
-        get(path = "/") {
-            call.respondText("Hello, world!")
+        applicationProperties["adminPortalReactAppPath"]?.let {
+            logger.debug("Serving admin portal from path {}", it)
+            singlePageApplication {
+                applicationRoute = "/admin-portal"
+                react(it as String)
+            }
+        } ?: run {
+            logger.warn("adminPortalReactAppPath property not set")
         }
 
         accountRoutes()

@@ -6,6 +6,10 @@ import com.jamesellerbee.taskfire.tasktrackerapi.app.interfaces.TaskRepository
 class InMemoryTaskRepository : TaskRepository {
     private val taskMap = mutableMapOf<String, MutableList<Task>>()
 
+    override fun getTasks(): List<Task> {
+        return taskMap.values.flatMap { it.toList() }
+    }
+
     override fun getTasksByAccountId(accountId: String): List<Task> {
         return taskMap[accountId] ?: emptyList()
     }

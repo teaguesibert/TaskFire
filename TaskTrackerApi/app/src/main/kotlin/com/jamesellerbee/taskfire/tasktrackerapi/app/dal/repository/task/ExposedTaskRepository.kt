@@ -14,6 +14,18 @@ import org.jetbrains.exposed.sql.transactions.transaction
 class ExposedTaskRepository(serviceLocator: ServiceLocator) : TaskRepository {
     private val database = ExposedDatabaseHelper.init(serviceLocator)
 
+    override fun getTasks(): List<Task> {
+        val tasks = mutableListOf<Task>()
+
+        transaction(database) {
+            TaskEntity.all().forEach { taskEntity ->
+                tasks.add(taskEntity.toTask())
+            }
+        }
+
+        return tasks
+    }
+
     override fun getTasksByAccountId(accountId: String): List<Task> {
         val tasks = mutableListOf<Task>()
 
