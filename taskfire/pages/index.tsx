@@ -47,7 +47,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-slate-500">
+    <div className="flex flex-col justify-center items-center h-[100svh] bg-slate-500">
 <Image
       src="/NotesApp.svg"
       width={65}

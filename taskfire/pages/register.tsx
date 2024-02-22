@@ -52,7 +52,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-slate-500">
+    <div className="flex flex-col justify-center items-center h-[100svh] bg-slate-500">
    <Image
       src="/NotesApp.svg"
       width={65}
@@ -102,7 +102,7 @@ const RegisterPage = () => {
           <button className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
             Register
           </button>
-          <a className="inline-block align-baseline font-bold text-sm text-amber-600 hover:text-amber-700 " href="#" onClick={() => router.push('/')}>
+          <a className=" align-baseline font-bold text-sm text-amber-600 hover:text-amber-700 ml-3 md:ml-0" href="#" onClick={() => router.push('/')}>
             Already have an account?
           </a>
         </div>

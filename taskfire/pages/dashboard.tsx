@@ -149,7 +149,7 @@ const Dashboard:React.FC = () => {
 
 
         return (
-            <div className="bg-gray-900 text-gray-100 h-screen  pt-4 px-4 flex flex-col justify-between">
+            <div className="bg-gray-900 text-gray-100 h-[100svh]  pt-4 px-4 flex flex-col justify-between">
                 <div className="flex flex-row justify-between mb-3">
                     <Image
                     src="/NotesApp.svg"
