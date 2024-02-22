@@ -15,13 +15,15 @@ const RegisterPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [userEmail, setUserEmail] = useState('')
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
   
     const payload = {
       name: username,
-      password: password
+      password: password,
+      email: userEmail
     };
   
     try {
@@ -83,6 +85,19 @@ const RegisterPage = () => {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div className="m-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+            Email
+          </label>
+          <input 
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+            id="email" 
+            type="text" 
+            placeholder="Email"
+            value={userEmail}
+            onChange={(e) => setUserEmail(e.target.value)}
           />
         </div>
         <div className="m-4">
