@@ -30,7 +30,7 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("org.slf4j:slf4j-api:2.0.11")
     implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.22.1")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.6")
@@ -40,6 +40,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.47.0")
 
     implementation("org.xerial:sqlite-jdbc:3.44.1.0")
+
+    implementation("org.apache.commons:commons-email:1.5")
+    implementation("commons-validator:commons-validator:1.8.0")
+
 }
 
 kotlin {

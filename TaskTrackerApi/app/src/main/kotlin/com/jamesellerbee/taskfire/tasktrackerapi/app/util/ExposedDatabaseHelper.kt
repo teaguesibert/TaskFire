@@ -3,13 +3,16 @@ package com.jamesellerbee.taskfire.tasktrackerapi.app.util
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.properties.ApplicationProperties
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.DatabaseType
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAccountRepository
+import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.account.ExposedAdminRepository
 import com.jamesellerbee.taskfire.tasktrackerapi.app.dal.repository.task.ExposedTaskRepository
 import java.io.File
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.slf4j.LoggerFactory
 
 object ExposedDatabaseHelper {
     private var database: Database? = null
@@ -22,7 +25,7 @@ object ExposedDatabaseHelper {
             )!!
 
             val databaseType = DatabaseType.valueOf(
-                applicationProperties.get("databaseDriver", "") as String
+                applicationProperties.get("databaseDriver", "")
             )
 
             when (databaseType) {
@@ -41,16 +44,53 @@ object ExposedDatabaseHelper {
                         "jdbc:sqlite:$sqliteDbPath", "org.sqlite.JDBC"
                     )
 
-                    transaction {
+                    transaction(database) {
                         addLogger(StdOutSqlLogger)
 
                         SchemaUtils.create(ExposedAccountRepository.Accounts)
                         SchemaUtils.create(ExposedTaskRepository.Tasks)
+                        SchemaUtils.create(ExposedAdminRepository.Admins)
+
+                        AccountsSqliteMigrationHelper.migrate(this)
                     }
                 }
             }
         }
 
         return database!!
+    }
+}
+
+object AccountsSqliteMigrationHelper {
+    fun migrate(transaction: Transaction) {
+        val logger = LoggerFactory.getLogger(this::class.java)
+        logger.info("Migrating Accounts table")
+
+        val existingColumns = transaction.exec("PRAGMA table_info(Accounts);") {
+            val columns = mutableListOf<String>()
+            while (it.next()) {
+                columns.add(it.getString(2))
+            }
+
+            columns.toList()
+        } ?: emptyList()
+
+        if (existingColumns.none { it == "created" }) {
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN created BIGINT DEFAULT 0;")
+        } else {
+            logger.debug("Accounts table already has column \"created\". Nothing to do.")
+        }
+
+        if (existingColumns.none { it == "email" }) {
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN email varchar(256) DEFAULT \"\";")
+        } else {
+            logger.debug("Accounts tablet already has column \"email\". Nothing to do.")
+        }
+
+        if (existingColumns.none { it == "verified" }) {
+            transaction.exec("ALTER TABLE Accounts ADD COLUMN verified INTEGER DEFAULT 0;")
+        } else {
+            logger.debug("Accounts table already has column \"verified\". Nothing to do.")
+        }
     }
 }

@@ -8,7 +8,6 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
@@ -18,18 +17,24 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
 
     override fun addAccount(newAccount: Account) {
         transaction(database) {
-            val existingAccounts =
-                AccountEntity.find { (Accounts.name eq newAccount.name) or (Accounts.accountId eq newAccount.id) }
-
-            if (existingAccounts.empty()) {
-                AccountEntity.new {
-                    name = newAccount.name
-                    password = newAccount.password
-                    accountId = newAccount.id
+            AccountEntity.find { Accounts.name eq newAccount.name }.firstOrNull()?.delete()
+            AccountEntity.new {
+                name = newAccount.name
+                email = newAccount.email
+                password = newAccount.password
+                accountId = newAccount.id
+                created = newAccount.created
+                verified = when (newAccount.verified) {
+                    true -> 1
+                    false -> 0
                 }
-            } else {
-                logger.warn("There already exists an account with this name or id")
             }
+        }
+    }
+
+    override fun deleteAccount(accountId: String) {
+        transaction(database) {
+            AccountEntity.find { Accounts.accountId eq accountId }.firstOrNull()?.delete()
         }
     }
 
@@ -48,7 +53,7 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
     override fun getAccount(accountId: String): Account? {
         var account: Account? = null
 
-        transaction {
+        transaction(database) {
             AccountEntity.find { Accounts.accountId eq accountId }.firstOrNull()?.let { accountEntity ->
                 account = accountEntity.toAccount()
             }
@@ -58,23 +63,32 @@ class ExposedAccountRepository(serviceLocator: ServiceLocator) : AccountReposito
     }
 
     object Accounts : IntIdTable() {
+        val email = varchar("email", 256)
         val name = varchar("name", 50)
         val password = varchar("password", 256)
         val accountId = varchar("accountId", 50)
+        val created = long("created")
+        val verified = integer("verified")
     }
 
     class AccountEntity(id: EntityID<Int>) : IntEntity(id) {
         companion object : IntEntityClass<AccountEntity>(Accounts)
 
+        var email by Accounts.email
         var name by Accounts.name
         var password by Accounts.password
         var accountId by Accounts.accountId
+        var created by Accounts.created
+        var verified by Accounts.verified
 
         fun toAccount(): Account {
             return Account(
                 name = name,
+                email = email,
                 password = password,
-                id = accountId
+                id = accountId,
+                created = created,
+                verified = verified == 1
             )
         }
     }

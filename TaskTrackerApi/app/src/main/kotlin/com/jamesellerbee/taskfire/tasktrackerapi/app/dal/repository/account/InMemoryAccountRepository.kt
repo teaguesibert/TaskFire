@@ -10,6 +10,10 @@ class InMemoryAccountRepository : AccountRepository {
         accounts[newAccount.id] = newAccount
     }
 
+    override fun deleteAccount(accountId: String) {
+        accounts.remove(accountId)
+    }
+
     override fun getAccounts(): List<Account> {
         return accounts.values.toList()
     }

@@ -1,0 +1,263 @@
+openapi: "3.0.3"
+info:
+  title: "TaskTrackerApi API"
+  description: "TaskTrackerApi API"
+  version: "1.0.0"
+servers:
+  - url: "https://TaskTrackerApi"
+paths:
+  /accounts:
+    get:
+      description: ""
+      parameters:
+        - name: "name"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "name"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Account"
+  /auth:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/Account"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/HashMap_String"
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /register:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/Account"
+        required: true
+      responses:
+        "406":
+          description: "Not Acceptable"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Password cannot be blank"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Account"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Account already exists with that name"
+  /tasks:
+    get:
+      description: ""
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Task"
+  /tasks/{accountId}:
+    get:
+      description: ""
+      parameters:
+        - name: "accountId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "An account ID was not provided"
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Account ID claim does not match provided account ID"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      description: ""
+      parameters:
+        - name: "accountId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/Task"
+        required: true
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Account ID claim does not match provided account ID"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /tasks/{accountId}/{taskId}:
+    delete:
+      description: ""
+      parameters:
+        - name: "accountId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+        - name: "taskId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Account ID claim does not match provided account ID"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+components:
+  schemas:
+    Account:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        password:
+          type: "string"
+        id:
+          type: "string"
+        created:
+          type: "integer"
+          format: "int64"
+      required:
+        - "name"
+        - "password"
+        - "id"
+    HashMap:
+      type: "object"
+      properties: { }
+    HashMap_String:
+      type: "string"
+    Task:
+      type: "object"
+      properties:
+        title:
+          type: "string"
+        accountId:
+          type: "string"
+        created:
+          type: "integer"
+          format: "int64"
+        modified:
+          type: "integer"
+          format: "int64"
+        due:
+          type: "integer"
+          format: "int64"
+        completed:
+          type: "boolean"
+        description:
+          type: "string"
+        taskId:
+          type: "string"
+      required:
+        - "title"
+        - "accountId"
+        - "description"
+        - "taskId"
