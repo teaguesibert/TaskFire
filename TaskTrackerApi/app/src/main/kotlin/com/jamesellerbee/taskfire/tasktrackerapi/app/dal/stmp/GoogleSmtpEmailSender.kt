@@ -19,10 +19,12 @@ class GoogleSmtpEmailSender(serviceLocator: ServiceLocator) {
     private fun getSimpleEmail(): SimpleEmail {
         val account = applicationProperties["emailAccount"] as String
         val password = applicationProperties["emailPassword"] as String
+        val alias = applicationProperties["alias"] as String
 
         return SimpleEmail().also {
             it.hostName = "smtp.googlemail.com"
             it.setSmtpPort(465)
+
             it.setAuthentication(
                 account,
                 password
@@ -30,7 +32,7 @@ class GoogleSmtpEmailSender(serviceLocator: ServiceLocator) {
 
             it.setSSLOnConnect(true)
             it.setStartTLSRequired(true)
-            it.setFrom(account.plus("@gmail.com"))
+            it.setFrom(alias)
         }
     }
 }
