@@ -283,11 +283,11 @@ fun Application.module() {
             logger.warn("openApiPath property not set")
         }
 
-        applicationProperties["adminPortalReactAppPath"]?.let {
-            logger.debug("Serving admin portal from path {}", it)
+        applicationProperties["adminPortalReactAppPath"]?.let { adminPortalReactAppPath ->
+            logger.debug("Serving admin portal from path {}", adminPortalReactAppPath)
             singlePageApplication {
                 applicationRoute = "/admin-portal"
-                react(it as String)
+                react(adminPortalReactAppPath as String)
             }
         } ?: run {
             logger.warn("adminPortalReactAppPath property not set")
