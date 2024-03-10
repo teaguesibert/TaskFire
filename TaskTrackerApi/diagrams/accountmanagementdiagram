@@ -1,0 +1,63 @@
+@startuml
+autonumber
+
+skinparam MaxMessageSize 165
+skinparam wrapWidth 165
+
+actor user
+participant webapp as client
+participant api as server
+participant email as smtp
+
+== Registration ==
+user -> client: navigates to taskfire website
+user <-- client: serves login page
+user -> client: navigates to register page
+user <-- client: serves register page
+user -> client: submits register form
+client -> server: post: /register, Account json object with required fields
+
+note right
+  An Account requires name, email, and password.
+end note
+
+server -> smtp: Send verification email (https://taskfireapi.jamesellerbee.com/verify/{accountId})
+smtp -> user: Sends user an email with verification link
+client <-- server: Responds with Account data as json object
+
+user -> user: User clicks verificaiton link from email
+user -> server: get: /verify/{accountId}
+user <-- server: redirect to taskfire login
+user -> client: Login using username and password
+
+== Requesting a password reset ==
+user -> client: navigates to taskfire website
+user <-- client: serves login page
+user -> client: navigates to forgot password
+user <-- client: serves password reset form
+user -> client: enters email
+client -> server: get: /passwordReset/{accountId}
+server -> server: generate a reset key to put in password reset link, stash key associated with account id with a lease of some amount of time.
+server -> smtp: Sent email containing password reset link
+user <- smtp: Sends user an email with reset link
+client <-- server: OK Http response
+user -> user: Click password reset link from email
+user -> client: get: /passwordReset/{accountId}/{resetKey}
+client -> server: check is valid account id reset key pair
+
+note right
+  This might be a path that looks the same as the path on the frontend side (e.g. get: /passwordReset/{accountId}/{resetKey})
+end note
+
+alt valid account id reset key
+  client <-- server: OK http response
+  user <- client: serve password reset form
+  user -> client: submit new password
+  client -> server: post: /passwordReset/{accountId}/{resetKey}, json obj containing new password
+  user <-- client: serve login in page
+  user -> client: login using new credentials
+else
+  client <-- server: BAD http response
+  user <- client: how the hell did u get here?
+end
+@enduml

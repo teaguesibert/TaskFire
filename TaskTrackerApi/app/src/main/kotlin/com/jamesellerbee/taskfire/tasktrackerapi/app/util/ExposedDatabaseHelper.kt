@@ -12,10 +12,13 @@ import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object ExposedDatabaseHelper {
     private var database: Database? = null
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     fun init(serviceLocator: ServiceLocator): Database {
         if (database == null) {
             val applicationProperties = serviceLocator.resolve<ApplicationProperties>(
@@ -33,12 +36,29 @@ object ExposedDatabaseHelper {
                     val sqliteDbPath = applicationProperties.get(
                         "sqliteDbPath",
                         ""
-                    ) as String
+                    )
+
+
 
                     // Create sqlite db file if it doesn't already exist
                     val file = File(sqliteDbPath)
-                    file.parentFile.mkdirs()
-                    file.createNewFile()
+
+                    // Back up existing sqlite db file if it exists
+                    if(file.exists()) {
+                        val sqliteBackupPath = applicationProperties.get(
+                            "sqliteDpBackupPath",
+                            ""
+                        )
+
+                        logger.info("Backing up sqlite DB")
+                        val backUpFile = File(sqliteBackupPath)
+                        backUpFile.parentFile.mkdirs()
+                        file.copyTo(backUpFile, true)
+                    } else {
+                        logger.info("Creating sqlite DB")
+                        file.parentFile.mkdirs()
+                        file.createNewFile()
+                    }
 
                     database = Database.connect(
                         "jdbc:sqlite:$sqliteDbPath", "org.sqlite.JDBC"
